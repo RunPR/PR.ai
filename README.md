@@ -18,47 +18,40 @@ PR.ai is an AI insights and pacing layer that sits on top of Strava. It takes ru
 
 ## Repository structure
 
-```
-PR.ai/
-├── README.md                   ← You are here
-├── PROJECT_STATE.md            ← Current state, what's done, what's next
-├── CHANGELOG.md                ← What changed and when
-├── docs/
-│   ├── SKILL.md                ← System prompt + user message template
-│   ├── DATABASE_SCHEMA.md      ← Postgres schema for MVP
-│   ├── ARCHITECTURE.md         ← System architecture + mermaid diagrams
-│   ├── RELEASE_GUIDE.md        ← MVP release plan (Phase 0 through 4)
-│   ├── TEST_SUITE.md           ← 15 test scenarios with expected behaviors
-│   ├── SUGGESTIONS_LOG.md      ← Feature tracker (MVP + backlog)
-│   └── RCA_MANIFEST.md         ← Quick reference manifest
-├── prompts/
-│   └── system-prompt.txt       ← The actual prompt text, isolated
-├── test/
-│   ├── test-harness.js         ← Node.js harness for API testing
-│   └── TestSUITE-LATEST.jsx    ← React UI for running tests
-└── app/                        ← (Future) Next.js MVP code
-```
+- [`PROJECT_STATE.md`](PROJECT_STATE.md) — Current state, what's done, what's next
+- [`CHANGELOG.md`](CHANGELOG.md) — What changed and when
+- **docs/**
+  - [`docs/SKILL.md`](docs/SKILL.md) — System prompt + user message template (v4.1)
+  - [`docs/DATABASE_SCHEMA.md`](docs/DATABASE_SCHEMA.md) — Postgres schema for MVP (11 tables)
+  - [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) — System architecture + mermaid diagrams
+  - [`docs/RELEASE_GUIDE.md`](docs/RELEASE_GUIDE.md) — MVP release plan (Phase 0 through 4, 11-step build)
+  - [`docs/TEST_SUITE.md`](docs/TEST_SUITE.md) — 15 test scenarios with expected behaviors
+  - [`docs/SUGGESTIONS_LOG.md`](docs/SUGGESTIONS_LOG.md) — Feature tracker (MVP + backlog)
+- **prompts/**
+  - [`prompts/system-prompt.txt`](prompts/system-prompt.txt) — The actual prompt text, isolated
+- **test/**
+  - [`test/test-harness.js`](test/test-harness.js) — Node.js harness for API testing
+  - [`test/test_suite.jsx`](test/test_suite.jsx) — React UI for running tests interactively
+- **app/** *(future)* — Next.js MVP code
 
 ---
 
 ## Loading this project in a Claude chat
 
-In any new Claude chat, type one of these:
+In any new Claude chat, type:
 
-**Quick load:**
-> "load RCA"
+**Quick load:** `load PR.ai` (or `load RCA`)
 
-**Specific file load:**
-> "Pull the latest SKILL.md and TEST_SUITE.md from PR.ai"
+Claude fetches all docs from this repo via the linked URLs above. The repo must be public for that to work, which it is.
 
-Claude will fetch directly from this repo using the raw GitHub URLs (this repo must be public for that to work). If the repo is private, paste the file contents manually.
+**Specific file load:** `Pull the latest SKILL.md and TEST_SUITE.md from PR.ai`
 
 ---
 
 ## Key decisions made
 
 | Decision | Value |
-|---|---|
+| --- | --- |
 | Stack | Next.js PWA + Node + Postgres |
 | Hosting | Vercel + Railway/Render |
 | Free tier model | Claude Haiku 4.5 |
@@ -73,7 +66,7 @@ Claude will fetch directly from this repo using the raw GitHub URLs (this repo m
 1. **Run the test harness** on Haiku 4.5 (free scenarios) and Sonnet 4.6 (paid scenarios)
 2. **Validate with 3 runner friends** — show real sample debriefs and get honest feedback
 3. **Phase 1 Step 1** — landing page + waitlist signup
-4. See `RELEASE_GUIDE.md` for the full 11-step build order
+4. See [`docs/RELEASE_GUIDE.md`](docs/RELEASE_GUIDE.md) for the full 11-step build order
 
 ---
 
@@ -85,7 +78,6 @@ npm install
 ANTHROPIC_API_KEY=your_key node test-harness.js
 ```
 
-Results write to `test/results/test-results.json`. Bring them back to a Claude chat for evaluation against `docs/TEST_SUITE.md`.
+Results write to `test/results/test-results.json`. Bring them back to a Claude chat for evaluation against [`docs/TEST_SUITE.md`](docs/TEST_SUITE.md).
 
 Estimated cost: ~$2-3 in API tokens. Estimated time: ~2-3 minutes.
-# PR.ai
