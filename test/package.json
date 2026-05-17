@@ -1,0 +1,12 @@
+{
+  "name": "pr-ai-test-harness",
+  "version": "0.1.0",
+  "description": "Test harness for running PR.ai test suite against Anthropic API",
+  "main": "test-harness.js",
+  "scripts": {
+    "test": "node test-harness.js"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.30.0"
+  }
+}
