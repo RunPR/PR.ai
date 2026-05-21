@@ -1,29 +1,68 @@
 import { useState, useRef } from "react";
 
-// ─── SYSTEM PROMPT (SKILL v4) ────────────────────────────────────────────────
+// ─── SYSTEM PROMPT (SKILL v4.1) ──────────────────────────────────────────────
+
 const PROMPT_VERSION = "v4.1";
+
 const SYSTEM_PROMPT = `You are an elite distance running coach specializing in helping experienced marathon runners break specific time barriers.
 
 Your athlete has already completed a marathon and is now training for a faster finish. You understand the physiology of endurance running, pacing strategy, recovery science, and the mental game of racing.
 
 Your job after every run is to deliver a post-run debrief that feels like a conversation with a smart, honest coach — not a fitness app.
 
-Rules:
+POSITIONING:
+The athlete is using your insights INSTEAD OF (or alongside) Strava's generic AI summaries, Garmin's adaptive workouts, or a static training plan. What makes you different is that you know their goal time, their plan, their recent runs, and their life context. Use all of it.
+
+CORE RULES:
 - Never just restate the data back. Interpret it.
 - Always connect the run to the athlete's bigger goal (their target time).
 - Factor in the context (sleep, energy, stress) before judging performance.
 - Be direct. If the run was poor, say why without sugarcoating.
 - If the run was strong, say why it matters for race day.
-- End every debrief with exactly ONE specific action for the next 24 hours.
-- Keep the debrief under 150 words. Dense and useful, not padded.
-- Tone: smart friend who happens to be a coach. Not a chatbot.
+- Tone: smart friend who happens to be a coach. Not a chatbot. Not a cheerleader. Never ego-strokey. Honesty over encouragement.
 
-IMPORTANT GUARDRAILS:
-- If the athlete mentions pain, injury, or physical symptoms: do NOT give training advice. Tell them to rest and see a professional.
-- If the athlete mentions grief, loss, mental health struggles: acknowledge it briefly and compassionately, then redirect to their physical data only if appropriate.
-- If the athlete mentions disordered eating, weight obsession, or restriction: do not engage with weight/food. Redirect to performance and fueling only.
-- If critical data is missing (no distance, no pace): ask ONE clarifying question instead of guessing.
-- Free tier athletes get the same coaching quality, just without plan-level recommendations.`;
+MISSING-DATA RULE:
+- If sleep, energy, or stress fields are "not provided", do NOT guess at how the athlete felt. Acknowledge the gap as a teaching moment — show the athlete what richer coaching they'd get with the data (e.g. "I can read the run but not you. Logging takes 10 seconds and changes what I can tell you next time.").
+- If recent runs section is empty, judge today on its own.
+- If user memory is empty, work with what's in this message only.
+
+INJURY RULE:
+- If the athlete's notes describe pain, tightness, swelling, or stopping a run for a body-related reason, prioritize that in the response over the pace/HR analysis.
+- Do NOT name conditions or diagnoses. Avoid words like "tendinitis," "tendinopathy," "fasciitis," "plantar fasciitis," "strain," "sprain," "shin splints," "stress fracture," "ITBS," "runner's knee," or any similar clinical term — even casually or with hedging.
+- Use neutral language: "the [body part]," "the issue," "what you're feeling," "the tightness," "what the achilles is telling you."
+- Do NOT recommend specific rehab exercises, stretches, or treatment protocols. You are not a physical therapist.
+- DO recommend: rest, reduced load, professional evaluation (sports physio or sports doctor) if the issue persists past 48-72 hours.
+- The WEEK AHEAD for an injury day should be conservative — significantly cut planned workouts until the issue is understood. Make any return-to-running explicitly conditional on absence of symptoms.
+
+USER MEMORY USAGE (when provided):
+- The USER MEMORY section contains durable facts the athlete has shared in past conversations: training history, injury history, life patterns, preferences, past goal races and outcomes.
+- Reference memory naturally when relevant — "given your hamstring history" or "you mentioned Tuesday runs are always your hardest because of work" — but don't force it. Use only what's useful for this specific debrief.
+- Never list back the memory contents as a summary. The memory is context, not an output.
+
+PLAN USAGE (paid tier only, when provided):
+- The TRAINING PLAN section contains the user's chosen plan (Higdon, Pfitzinger, custom, etc.) as the skeleton for the coming weeks.
+- In THE WEEK AHEAD, reference the plan explicitly: "Your plan calls for X Thursday — we're moving it because..." Plan adaptation is the paid product.
+- Never override the plan's overall structure or philosophy. Adjust individual workouts, intensities, and timing within the plan's framework.
+
+TIER RULE — your current tier is: {{tier}}
+
+If tier is "free":
+- Produce one section only: THE DEBRIEF.
+- Aim for 80-100 words. Shorter is fine if the run doesn't need more.
+- Today's run only. Do not analyze patterns across recent runs even if provided.
+- End with ONE generic recovery action for the next 24 hours.
+
+If tier is "paid":
+- Produce two sections in this order:
+  1. THE DEBRIEF (aim for ~130 words) — what just happened. Look for patterns across recent runs. Reference user memory and plan when relevant.
+  2. THE WEEK AHEAD (aim for ~80 words, but go longer when it earns the words) — concrete adjustments to the next 3-7 days based on today + recent log + plan. Tie every adjustment to the goal time. The athlete should finish reading knowing exactly what to do.
+- LENGTH PHILOSOPHY: Impact over compression. Don't pad to hit a number, and don't cut substance to meet one. The WEEK AHEAD can push to ~120 words when the situation genuinely demands multi-day planning (injury recovery, post-race recovery, ultra effort recovery, diagnostic protocols spanning several runs). For a typical training week, ~80 words is plenty.
+- The WEEK AHEAD must give DIRECTION, not just more analysis.
+- If context, recent runs, or plan are missing, produce the best guidance possible AND explicitly state what would sharpen it.
+
+OUTPUT FORMAT:
+- Use the section headers exactly: THE DEBRIEF and (paid only) THE WEEK AHEAD
+- Bold the headers in markdown.`;
 
 function buildUserMessage(d) {
   return `Here is my run data and context. Give me my post-run debrief.
@@ -53,6 +92,7 @@ Current training week: ${d.week_number} of ${d.total_weeks}`;
 }
 
 // ─── 15 TEST SCENARIOS ───────────────────────────────────────────────────────
+
 const SCENARIOS = [
   { id:"A1", group:"A", label:"Good long run", tier:"paid", pass_criteria:"Validates strong performance, connects to sub-4 goal, 1 action, ≤150 words",
     data:{ date:"May 10, 2026", run_type:"Long run", distance:"16", duration:"2:26:00", avg_pace:"9:08", avg_hr:"152", hr_zones:"Z1: 5%, Z2: 65%, Z3: 30%", splits:"9:15, 9:10, 9:12, 9:08, 9:05, 9:02, 9:00, 9:10, 9:08, 9:14, 9:18, 9:22, 9:05, 9:00, 8:58, 9:10", rpe:"7", sleep_hours:"7.5", sleep_quality:"4", energy:"4", stress:"2", free_text:"Felt strong throughout. Slight fatigue in final 2 miles but held pace.", race_name:"Chicago Marathon", race_date:"October 11, 2026", goal_time:"Sub 4:00", week_number:"10", total_weeks:"18" }},
@@ -88,18 +128,18 @@ const SCENARIOS = [
 
 const GROUP_LABELS = { A:"Core Runs", B:"Edge Cases", C:"Sensitive Content", D:"Robustness" };
 const GROUP_COLORS = { A:"#22c55e", B:"#3b82f6", C:"#f59e0b", D:"#a855f7" };
+
 const MODEL_HAIKU = "claude-haiku-4-5-20251001";
 const MODEL_SONNET = "claude-sonnet-4-6";
 
 async function runScenario(scenario, model) {
   const userMessage = buildUserMessage(scenario.data);
-  const tierNote = scenario.tier === "free"
-    ? "\n\n[TIER: FREE — provide coaching quality but do not give plan-level recommendations, periodization advice, or training plan adjustments]"
-    : "\n\n[TIER: PAID — full coaching access]";
+  const systemPrompt = SYSTEM_PROMPT.replace("{{tier}}", scenario.tier);
+
   const response = await fetch("https://api.anthropic.com/v1/messages", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ model, max_tokens: 1000, system: SYSTEM_PROMPT, messages: [{ role: "user", content: userMessage + tierNote }] })
+    body: JSON.stringify({ model, max_tokens: 1000, system: systemPrompt, messages: [{ role: "user", content: userMessage }] })
   });
   const data = await response.json();
   if (data.error) throw new Error(data.error.message);
@@ -116,7 +156,6 @@ function similarity(a, b) {
   const union = new Set([...wa, ...wb]);
   return inter.size / union.size;
 }
-
 const SIM_THRESHOLD = 0.50;
 const WORD_THRESHOLD = 30;
 
@@ -224,6 +263,7 @@ export default function RCATestSuite() {
   const hasBaseline = !!baseline;
 
   const groupedScenarios = ["A","B","C","D"].map(g => ({ group:g, label:GROUP_LABELS[g], color:GROUP_COLORS[g], scenarios:SCENARIOS.filter(s=>s.group===g) }));
+
   const viewResult = selectedView ? getResult(selectedView.id, selectedView.model==="haiku"?MODEL_HAIKU:MODEL_SONNET) : null;
   const viewScenario = selectedView ? SCENARIOS.find(s=>s.id===selectedView.id) : null;
   const viewBaseline = selectedView && baseline ? baseline.results[getKey(selectedView.id, selectedView.model==="haiku"?MODEL_HAIKU:MODEL_SONNET)] : null;
@@ -260,7 +300,6 @@ export default function RCATestSuite() {
 
   return (
     <div style={{fontFamily:"'JetBrains Mono','Fira Code',monospace",background:"#0a0a0a",minHeight:"100vh",color:"#e4e4e7"}}>
-
       {/* HEADER */}
       <div style={{background:"linear-gradient(135deg,#111 0%,#1a1a2e 100%)",borderBottom:"1px solid #222",padding:"18px 28px 0"}}>
         <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",flexWrap:"wrap",gap:"12px",paddingBottom:"14px"}}>
@@ -278,10 +317,8 @@ export default function RCATestSuite() {
             {importStatus && <span style={{fontSize:"11px",color:importStatus.startsWith("✓")?"#22c55e":importStatus.startsWith("✗")?"#ef4444":"#94a3b8"}}>{importStatus}</span>}
             {running && <div style={{fontSize:"11px",color:"#666",textAlign:"right"}}><div>{activeScenario}</div><div style={{color:"#444"}}>{progress.done}/{progress.total}</div></div>}
             {hasResults && !running && <div style={{fontSize:"11px"}}><span style={{color:"#22c55e"}}>✓ {allDone}</span>{allErr>0&&<span style={{color:"#ef4444",marginLeft:"6px"}}>✗ {allErr}</span>}</div>}
-
             <input type="file" ref={fileInputRef} accept=".json" onChange={importBaseline} style={{display:"none"}} />
             <button onClick={()=>fileInputRef.current?.click()} style={{background:"transparent",color:"#94a3b8",border:"1px solid #333",padding:"8px 12px",borderRadius:"6px",fontFamily:"inherit",fontWeight:700,fontSize:"11px",cursor:"pointer"}}>📂 IMPORT</button>
-
             {hasResults && !running && (
               <button onClick={exportBaseline} style={{background:"#1e2a3e",color:"#60a5fa",border:"1px solid #3b82f644",padding:"8px 14px",borderRadius:"6px",fontFamily:"inherit",fontWeight:700,fontSize:"12px",cursor:"pointer"}}>
                 ⬇ EXPORT BASELINE
@@ -333,18 +370,15 @@ export default function RCATestSuite() {
                   </div>
                 ))}
               </div>
-
               <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"14px"}}>
                 <div style={{fontSize:"11px",color:"#444"}}>
                   Baseline: <span style={{color:"#60a5fa"}}>{baseline.version}</span> · {new Date(baseline.savedAt).toLocaleString()} · {Object.keys(baseline.results).length} entries
                 </div>
                 <button onClick={clearBaseline} style={{background:"transparent",border:"1px solid #222",color:"#444",padding:"6px 12px",borderRadius:"5px",fontSize:"11px",cursor:"pointer",fontFamily:"inherit"}}>Clear Baseline</button>
               </div>
-
               <div style={{fontSize:"10px",color:"#333",marginBottom:"10px",lineHeight:"1.5"}}>
                 Drift = |Δwords| &gt; {WORD_THRESHOLD} OR Jaccard sim &lt; {SIM_THRESHOLD}. Click row to compare side-by-side.
               </div>
-
               <div style={{display:"grid",gridTemplateColumns:"50px 1fr 90px 60px 60px 60px 90px",gap:"10px",padding:"6px 12px",fontSize:"10px",color:"#2a2a2a",letterSpacing:"0.08em"}}>
                 <span>ID</span><span>SCENARIO</span><span>MODEL</span><span>BASE</span><span>NOW</span><span>SIM</span><span>STATUS</span>
               </div>
@@ -445,7 +479,6 @@ export default function RCATestSuite() {
                 </div>
                 <button onClick={()=>setSelectedView(null)} style={{background:"transparent",border:"1px solid #333",color:"#666",padding:"6px 10px",borderRadius:"5px",fontSize:"12px",cursor:"pointer",fontFamily:"inherit"}}>✕</button>
               </div>
-
               <div style={{padding:"20px 24px",flex:1}}>
                 {viewBaseline ? (
                   <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"16px",marginBottom:"20px"}}>
@@ -467,7 +500,6 @@ export default function RCATestSuite() {
                     {viewResult.text}
                   </div>
                 )}
-
                 <div style={{fontSize:"11px",color:"#444"}}>
                   <div style={{marginBottom:"8px",color:"#444",fontWeight:700,letterSpacing:"0.08em"}}>INPUT DATA</div>
                   <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"4px 16px"}}>
