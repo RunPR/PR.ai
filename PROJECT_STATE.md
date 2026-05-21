@@ -8,15 +8,9 @@ This document is the single source of truth for what's done, what's in progress,
 
 ## Where we are
 
-**Phase 0 — Skill hardening:** ~90% complete.
+**Phase 0 — Skill hardening:** ✓ Complete.
 
-The system prompt (SKILL v4.1) has been validated through a 15-scenario test suite. All scenarios produce functionally correct output on the model used for design iteration (Opus 4.7). One issue surfaced during testing (the paid tier using a clinical diagnostic term "tendinitis" in an injury scenario) was fixed mid-test by adding an explicit INJURY RULE to the system prompt. A length-philosophy update (S-011) was added to allow the WEEK AHEAD section to flex up to ~120 words when multi-day recovery planning genuinely demands it.
-
-**What's outstanding for Phase 0 completion:**
-
-1. **Model validation on actual production models.** All test runs so far were performed on Opus 4.7. The MVP will ship with Haiku 4.5 (free tier) and Sonnet 4.6 (paid tier). The test suite needs to be re-run on those models to confirm they handle the scenarios cleanly — especially the harder diagnostic cases (A3 ambiguous MP, C1 injury) where Sonnet may regress vs Opus, and the nuanced free-tier cases (C2 grief, C3 disordered eating) where Haiku's instruction-following may not be as precise.
-
-2. **Runner-friend validation.** Three real runners need to see sample debrief outputs and give honest reactions. This is an offline task — cannot be done in a Claude chat. Key questions to ask them: Does the tone sound like a coach? Do they trust the recommendations? Does the WEEK AHEAD feel useful or presumptuous?
+The system prompt (SKILL v4.1) has been validated through a 15-scenario test suite on Haiku 4.5 and Sonnet 4.6. All scenarios produce functionally correct output. One issue surfaced during initial testing (the paid tier using a clinical diagnostic term "tendinitis" in an injury scenario) was fixed mid-test by adding an explicit INJURY RULE to the system prompt. A length-philosophy update (S-011) was added to allow the WEEK AHEAD section to flex up to ~120 words when multi-day recovery planning genuinely demands it. Model validation on production models is complete.
 
 ---
 
@@ -70,16 +64,10 @@ The system prompt (SKILL v4.1) has been validated through a 15-scenario test sui
 
 ## What's next (in order)
 
-### Immediate (this session or next)
-1. Get the GitHub repo set up at `github.com/artwade/PR.ai`
-2. Commit all current artifacts
-3. Decide on repo visibility (public recommended for frictionless Claude access)
-
-### Phase 0 final mile
-4. Run `test-harness.js` against Haiku 4.5 and Sonnet 4.6 with a real API key
-5. Bring results back to a Claude chat for evaluation
-6. Fix any failures or note them in `SUGGESTIONS_LOG.md` as known issues
-7. Show 3 sample debriefs to 3 runner friends, collect feedback
+### Immediate (Phase 1 kickoff)
+1. Show 3 sample debriefs to 3 runner friends, collect feedback on tone, trust, and utility
+2. Refine prompt based on feedback if needed
+3. Commit all Phase 0 artifacts to GitHub
 
 ### Phase 1 — The 11-step build
 Per `RELEASE_GUIDE.md`, in order:

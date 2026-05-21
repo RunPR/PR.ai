@@ -3,6 +3,15 @@
 Phase 0 test scenarios for SKILL v4. The goal is locked-in skill quality
 before moving to Phase 1 (infrastructure build).
 
+## Test Results
+
+**Status:** ✓ All 15 scenarios passed  
+**Models tested:** Haiku 4.5 (free tier), Sonnet 4.6 (paid tier)  
+**Baseline:** `test/results/rca_baseline_v4.1_2026-05-21.json`  
+**Date:** May 21, 2026
+
+All scenarios produced functionally correct output within word limits and tier constraints. Prompt is locked for Phase 1 build.
+
 ## How to use this suite
 
 1. For each scenario, run it through the skill prompt at both free and paid
