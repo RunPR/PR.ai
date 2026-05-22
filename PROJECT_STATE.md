@@ -28,6 +28,7 @@ The system prompt (SKILL v4.1) has been validated through a 15-scenario test sui
 | `prompts/system-prompt.txt` | The prompt as plain text | v4.1 |
 | `test/test-harness.js` | Node.js harness to run scenarios against the API | Ready to run |
 | `test/TestSUITE-LATEST.jsx` | React-based interactive test runner UI | Working |
+| `apps/app` | Next.js app — auth (email/password), protected dashboard, Neon Postgres | Step 2 complete |
 
 ---
 
@@ -71,9 +72,9 @@ The system prompt (SKILL v4.1) has been validated through a 15-scenario test sui
 
 ### Phase 1 — The 11-step build
 Per `RELEASE_GUIDE.md`, in order:
-1. ✓ Landing page + waitlist — **LIVE:** https://pr-ai-git-main-runpr.vercel.app/
-2. Auth + empty dashboard
-3. Manual run entry
+1. ✅ Landing page + waitlist — live at [your vercel URL]
+2. ✅ Auth + empty dashboard — live at [https://pr-app-teal.vercel.app/login]
+3. Manual run entry  ← next
 4. First debrief (free tier only)
 5. Strava connection
 6. Context form
