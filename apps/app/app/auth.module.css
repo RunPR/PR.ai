@@ -1,0 +1,140 @@
+.wrap {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem 1.5rem;
+}
+
+.card {
+  width: 100%;
+  max-width: 420px;
+}
+
+.logo {
+  font-family: var(--serif);
+  font-size: 1.4rem;
+  font-weight: 500;
+  letter-spacing: -0.02em;
+  display: block;
+  margin-bottom: 3rem;
+  text-align: center;
+}
+
+.logo .mark { color: var(--fg); }
+.logo .dot { color: var(--accent); }
+.logo .tail { color: var(--fg-dim); }
+
+.title {
+  font-family: var(--serif);
+  font-size: 2.4rem;
+  font-weight: 400;
+  letter-spacing: -0.03em;
+  line-height: 1.05;
+  margin-bottom: 0.8rem;
+}
+
+.sub {
+  font-family: var(--serif);
+  font-weight: 300;
+  color: var(--fg-dim);
+  font-size: 1rem;
+  line-height: 1.5;
+  margin-bottom: 2.4rem;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-bottom: 1.2rem;
+}
+
+.label {
+  font-family: var(--mono);
+  font-size: 0.7rem;
+  color: var(--fg-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+}
+
+.input {
+  padding: 0.95rem 1.1rem;
+  font-size: 1rem;
+  font-family: var(--mono);
+  color: var(--fg);
+  background: var(--bg-elev);
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  transition: border-color 0.2s ease;
+}
+
+.input:focus {
+  border-color: var(--fg-dim);
+}
+
+.input::placeholder {
+  color: var(--fg-faint);
+}
+
+.input:disabled {
+  opacity: 0.5;
+}
+
+.submit {
+  width: 100%;
+  background: var(--accent);
+  color: var(--bg);
+  font-family: var(--mono);
+  font-size: 0.82rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  padding: 1rem;
+  border-radius: 4px;
+  margin-top: 0.8rem;
+  transition: background 0.15s ease, transform 0.1s ease, opacity 0.2s ease;
+}
+
+.submit:hover:not(:disabled) {
+  background: #e1ff5a;
+}
+
+.submit:active:not(:disabled) {
+  transform: scale(0.99);
+}
+
+.submit:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.message {
+  font-family: var(--mono);
+  font-size: 0.75rem;
+  margin-top: 1rem;
+  min-height: 1em;
+  letter-spacing: 0.03em;
+}
+
+.error { color: var(--danger); }
+.success { color: var(--accent); }
+
+.foot {
+  margin-top: 2rem;
+  text-align: center;
+  font-family: var(--mono);
+  font-size: 0.78rem;
+  color: var(--fg-dim);
+}
+
+.foot a {
+  color: var(--accent);
+  border-bottom: 1px solid transparent;
+  transition: border-color 0.15s ease;
+}
+
+.foot a:hover {
+  border-color: var(--accent);
+}
