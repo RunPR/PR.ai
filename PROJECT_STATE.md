@@ -71,7 +71,7 @@ The system prompt (SKILL v4.1) has been validated through a 15-scenario test sui
 
 ### Phase 1 — The 11-step build
 Per `RELEASE_GUIDE.md`, in order:
-1. Landing page + waitlist
+1. ✓ Landing page + waitlist — **LIVE:** https://pr-ai-git-main-runpr.vercel.app/
 2. Auth + empty dashboard
 3. Manual run entry
 4. First debrief (free tier only)

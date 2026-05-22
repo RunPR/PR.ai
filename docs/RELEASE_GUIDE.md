@@ -66,10 +66,11 @@ and move to Phase 1.
 Each step is a working, deployable system. Ship each one before starting the
 next. No exceptions.
 
-### Step 1 — Landing page + waitlist
+### Step 1 — Landing page + waitlist ✓
 - Static Next.js page on Vercel
 - Email capture → stored in a simple DB or Mailchimp
 - Validates: do people want this at all?
+- **Live:** https://pr-ai-git-main-runpr.vercel.app/
 - **Weekend: 1**
 
 ### Step 2 — Auth + empty dashboard
