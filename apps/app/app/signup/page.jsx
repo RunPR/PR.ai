@@ -43,7 +43,7 @@ export default function SignupPage() {
         throw new Error("Account created — please sign in.");
       }
 
-      router.push("/app");
+      router.push("/dashboard")    
     } catch (err) {
       setError(err.message);
       setStatus("idle");

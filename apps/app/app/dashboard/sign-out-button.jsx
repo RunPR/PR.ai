@@ -1,7 +1,7 @@
 "use client";
 
 import { signOut } from "next-auth/react";
-import styles from "./app.module.css";
+import styles from "./dashboard.module.css";
 
 export default function SignOutButton() {
   return (

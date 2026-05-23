@@ -6,7 +6,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "db:init": "node lib/db-init.js"
+    "db:init": "node lib/db-init.js",
+    "db:migrate-step3": "node lib/db-migrate-step3.js"
   },
   "dependencies": {
     "@vercel/postgres": "^0.10.0",
