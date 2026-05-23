@@ -75,8 +75,8 @@ Per `RELEASE_GUIDE.md`, in order:
 1. ✅ Landing page — live at https://pr-ai-landing.vercel.app. Next.js static page, Resend email capture.
 2. ✅ Auth + empty dashboard — live at https://pr-app-teal.vercel.app. NextAuth.js with email/password, JWT sessions, Neon Postgres, `users` table, protected `/dashboard` route.
 3. ✅ Manual run entry — live. `runs` and `run_contexts` tables created. Form at `/dashboard/runs/new`. Pace auto-calculated from distance + duration. HR optional. Run displays on dashboard after save.
-4. First debrief (free tier only)  ← next
-5. Strava connection
+4. ✅ Debrief generation — live. `debriefs` table created. Anthropic SDK integrated. Free tier (Haiku) produces ~100-word debriefs; paid tier (Sonnet) adds WEEK AHEAD. System prompt v4.1 governs all outputs.
+5. Strava connection  ← next
 6. Context form
 7. Recent runs + user memory
 8. Paid tier + reverse trial + billing

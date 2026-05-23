@@ -1,0 +1,315 @@
+.wrap {
+  min-height: 100vh;
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 0 2rem 5rem;
+}
+
+.nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1.6rem 0;
+  border-bottom: 1px solid var(--line);
+}
+
+.back {
+  font-family: var(--mono);
+  font-size: 0.72rem;
+  color: var(--fg-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  padding: 6px 10px;
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  transition: color 0.15s, border-color 0.15s;
+}
+
+.back:hover {
+  color: var(--fg);
+  border-color: var(--fg-dim);
+}
+
+.logo {
+  font-family: var(--serif);
+  font-size: 1.3rem;
+  font-weight: 500;
+  letter-spacing: -0.02em;
+}
+.logo .mark { color: var(--fg); }
+.logo .dot { color: var(--accent); }
+.logo .tail { color: var(--fg-dim); }
+
+/* ─── RUN SUMMARY ─────────────────────────────────────────── */
+.summary {
+  padding: 3.5rem 0 2rem;
+  border-bottom: 1px solid var(--line);
+}
+
+.summaryHeader {
+  display: flex;
+  align-items: baseline;
+  gap: 0.9rem;
+  margin-bottom: 1.5rem;
+}
+
+.runDate {
+  font-family: var(--serif);
+  font-size: 1.6rem;
+  font-weight: 500;
+  letter-spacing: -0.02em;
+  color: var(--fg);
+}
+
+.runType {
+  font-family: var(--mono);
+  font-size: 0.7rem;
+  color: var(--accent);
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  background: rgba(212, 255, 58, 0.08);
+  padding: 3px 9px;
+  border-radius: 3px;
+  font-weight: 600;
+}
+
+.statsGrid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1.6rem 2.2rem;
+}
+
+.stat {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.statLabel {
+  font-family: var(--mono);
+  font-size: 0.62rem;
+  color: var(--fg-faint);
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+}
+
+.statVal {
+  font-family: var(--mono);
+  font-size: 1rem;
+  color: var(--fg);
+  font-weight: 500;
+}
+
+.contextRow {
+  margin-top: 1.4rem;
+  font-family: var(--mono);
+  font-size: 0.74rem;
+  color: var(--fg-dim);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+.notes {
+  margin-top: 1.3rem;
+  font-family: var(--serif);
+  font-style: italic;
+  font-weight: 300;
+  font-size: 0.98rem;
+  color: var(--fg-dim);
+  line-height: 1.5;
+}
+
+/* ─── DEBRIEF SECTION ─────────────────────────────────────── */
+.debriefSection {
+  padding: 3rem 0 0;
+}
+
+.debriefHeader {
+  font-family: var(--mono);
+  font-size: 0.72rem;
+  color: var(--fg-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.7rem;
+  margin-bottom: 1.6rem;
+}
+
+.eyebrowDot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--accent);
+}
+
+.debriefContainer {
+  position: relative;
+}
+
+.debrief {
+  font-family: var(--serif);
+  font-weight: 300;
+  font-size: 1.18rem;
+  line-height: 1.7;
+  color: var(--fg);
+}
+
+.paragraph {
+  margin-bottom: 1.15rem;
+}
+
+.paragraph:last-child {
+  margin-bottom: 0;
+}
+
+.paragraph strong {
+  font-weight: 500;
+  color: var(--fg);
+}
+
+/* Section headers inside the debrief — "THE DEBRIEF", "THE WEEK AHEAD" */
+.sectionHeader {
+  font-family: var(--mono);
+  font-size: 0.72rem;
+  color: var(--accent);
+  text-transform: uppercase;
+  letter-spacing: 0.2em;
+  font-weight: 600;
+  margin: 1.8rem 0 0.9rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--line);
+}
+
+.sectionHeader:first-child {
+  margin-top: 0;
+  padding-top: 0;
+  border-top: none;
+}
+
+/* Streaming cursor */
+.cursor {
+  display: inline-block;
+  width: 8px;
+  height: 1.2em;
+  background: var(--accent);
+  margin-left: 2px;
+  vertical-align: text-bottom;
+  animation: blink 1s ease-in-out infinite;
+}
+
+@keyframes blink {
+  0%, 50% { opacity: 1; }
+  51%, 100% { opacity: 0; }
+}
+
+/* ─── LOADING / THINKING ──────────────────────────────────── */
+.starting {
+  font-family: var(--serif);
+  font-style: italic;
+  font-weight: 300;
+  color: var(--fg-dim);
+  font-size: 1rem;
+}
+
+.thinking {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-family: var(--mono);
+  font-size: 0.78rem;
+  color: var(--fg-dim);
+  letter-spacing: 0.04em;
+}
+
+.thinkingDot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--accent);
+  animation: pulse 1.4s ease-in-out infinite;
+}
+
+.thinkingDot:nth-child(1) { animation-delay: 0s; }
+.thinkingDot:nth-child(2) { animation-delay: 0.2s; }
+.thinkingDot:nth-child(3) { animation-delay: 0.4s; }
+
+.thinkingLabel {
+  margin-left: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  font-size: 0.7rem;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 0.3; transform: scale(0.8); }
+  50% { opacity: 1; transform: scale(1.15); }
+}
+
+/* ─── ERROR ──────────────────────────────────────────────── */
+.errorBox {
+  background: rgba(255, 107, 90, 0.05);
+  border: 1px solid rgba(255, 107, 90, 0.25);
+  border-radius: 6px;
+  padding: 1.4rem 1.6rem;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.7rem;
+}
+
+.errorLabel {
+  font-family: var(--mono);
+  font-size: 0.72rem;
+  color: var(--danger);
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+  font-weight: 600;
+}
+
+.errorMsg {
+  font-family: var(--serif);
+  font-weight: 300;
+  font-size: 0.95rem;
+  color: var(--fg-dim);
+}
+
+.retryBtn {
+  margin-top: 0.4rem;
+  background: transparent;
+  border: 1px solid var(--fg-dim);
+  color: var(--fg);
+  font-family: var(--mono);
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  padding: 0.6rem 1.1rem;
+  border-radius: 4px;
+  transition: border-color 0.15s, color 0.15s;
+}
+
+.retryBtn:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+/* ─── FOOTER ─────────────────────────────────────────────── */
+.footer {
+  margin-top: 2.4rem;
+  padding-top: 1.4rem;
+  border-top: 1px dashed var(--line);
+  font-family: var(--mono);
+  font-size: 0.66rem;
+  color: var(--fg-faint);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+@media (max-width: 600px) {
+  .wrap { padding: 0 1.4rem 4rem; }
+  .summary { padding: 2.5rem 0 1.5rem; }
+  .debriefSection { padding: 2.5rem 0 0; }
+  .debrief { font-size: 1.05rem; }
+  .runDate { font-size: 1.35rem; }
+}

@@ -209,15 +209,23 @@
 }
 
 .runRow {
+  display: block;
   background: var(--bg-elev);
   border: 1px solid var(--line);
   border-radius: 8px;
   padding: 1.4rem 1.6rem;
-  transition: border-color 0.15s;
+  transition: border-color 0.15s, transform 0.1s;
+  cursor: pointer;
+  text-decoration: none;
+  color: inherit;
 }
 
 .runRow:hover {
-  border-color: #2a2a28;
+  border-color: var(--fg-dim);
+}
+
+.runRow:active {
+  transform: scale(0.997);
 }
 
 .runDate {
@@ -296,15 +304,16 @@
   border-top: 1px solid var(--line);
 }
 
-.runDebriefPending {
+.runViewDebrief {
   margin-top: 0.9rem;
   padding-top: 0.9rem;
   border-top: 1px dashed var(--line);
   font-family: var(--mono);
-  font-size: 0.68rem;
-  color: var(--fg-faint);
-  text-transform: uppercase;
+  font-size: 0.7rem;
+  color: var(--accent);
   letter-spacing: 0.1em;
+  text-transform: uppercase;
+  font-weight: 600;
   display: flex;
   align-items: center;
   gap: 0.6rem;
@@ -314,7 +323,7 @@
   width: 5px;
   height: 5px;
   border-radius: 50%;
-  background: var(--fg-faint);
+  background: var(--accent);
 }
 
 @media (max-width: 720px) {

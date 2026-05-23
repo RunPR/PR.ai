@@ -7,9 +7,11 @@
     "build": "next build",
     "start": "next start",
     "db:init": "node lib/db-init.js",
-    "db:migrate-step3": "node lib/db-migrate-step3.js"
+    "db:migrate-step3": "node lib/db-migrate-step3.js",
+    "db:migrate-step4": "node lib/db-migrate-step4.js"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.98.0",
     "@vercel/postgres": "^0.10.0",
     "bcryptjs": "^2.4.3",
     "dotenv": "^16.4.5",
