@@ -1,6 +1,6 @@
 # PR.ai — Project State
 
-**As of:** May 17, 2026 (initial commit)
+**As of:** May 22, 2026
 
 This document is the single source of truth for what's done, what's in progress, and what's next. Update after every significant work session.
 
@@ -8,9 +8,9 @@ This document is the single source of truth for what's done, what's in progress,
 
 ## Where we are
 
-**Phase 0 — Skill hardening:** ✓ Complete.
+**Phase 0 — Skill hardening:** ✓ Complete (closed May 21, 2026).
 
-The system prompt (SKILL v4.1) has been validated through a 15-scenario test suite on Haiku 4.5 and Sonnet 4.6. All scenarios produce functionally correct output. One issue surfaced during initial testing (the paid tier using a clinical diagnostic term "tendinitis" in an injury scenario) was fixed mid-test by adding an explicit INJURY RULE to the system prompt. A length-philosophy update (S-011) was added to allow the WEEK AHEAD section to flex up to ~120 words when multi-day recovery planning genuinely demands it. Model validation on production models is complete.
+All 15 test scenarios passed on Haiku 4.5 and Sonnet 4.6. Baseline exported as `test/rca_baseline_v4.1_2026-05-21.json`. `test/test_suite.jsx` drift fixed — now correctly uses v4.1 prompt with `{{tier}}` interpolation. Model validation on production models is complete.
 
 ---
 
@@ -27,8 +27,10 @@ The system prompt (SKILL v4.1) has been validated through a 15-scenario test sui
 | `docs/RCA_MANIFEST.md` | Quick reference manifest | Final |
 | `prompts/system-prompt.txt` | The prompt as plain text | v4.1 |
 | `test/test-harness.js` | Node.js harness to run scenarios against the API | Ready to run |
-| `test/TestSUITE-LATEST.jsx` | React-based interactive test runner UI | Working |
-| `apps/app` | Next.js app — auth (email/password), protected dashboard, Neon Postgres | Step 2 complete |
+| `test/test_suite.jsx` | React-based interactive test runner UI | v4.1, drift fixed |
+| `test/rca_baseline_v4.1_2026-05-21.json` | Baseline test results, all scenarios | Exported |
+| `apps/landing/` | Next.js landing page + Resend email capture | Live at https://pr-ai-landing.vercel.app |
+| `apps/app/` | Next.js app — auth (email/password), dashboard, runs, Neon Postgres | Live at https://pr-app-teal.vercel.app |
 
 ---
 
@@ -58,24 +60,22 @@ The system prompt (SKILL v4.1) has been validated through a 15-scenario test sui
 ### Test suite
 - 15 scenarios across 4 categories: core runs (A1-A5), edge cases (B1-B4), sensitive content (C1-C3), robustness (D1-D3).
 - Exit criteria: 100% pass on both tiers, word counts respect tier limits, no regressions when prompt is changed.
-- One failure surfaced and fixed (C1 paid using "tendinitis") → INJURY RULE added.
+- All 15 passed on Haiku 4.5 and Sonnet 4.6. Baseline at `test/rca_baseline_v4.1_2026-05-21.json`.
+- One issue surfaced and fixed during Phase 0 (C1 paid using "tendinitis") → INJURY RULE added.
 - Length philosophy updated (S-011) — WEEK AHEAD can flex when content genuinely demands it.
 
 ---
 
 ## What's next (in order)
 
-### Immediate (Phase 1 kickoff)
-1. Show 3 sample debriefs to 3 runner friends, collect feedback on tone, trust, and utility
-2. Refine prompt based on feedback if needed
-3. Commit all Phase 0 artifacts to GitHub
-
 ### Phase 1 — The 11-step build
+**Status:** In progress
+
 Per `RELEASE_GUIDE.md`, in order:
-1. ✅ Landing page + waitlist — live at [your vercel URL]
-2. ✅ Auth + empty dashboard — live at [https://pr-app-teal.vercel.app/login]
-3. Manual run entry  ← next
-4. First debrief (free tier only)
+1. ✅ Landing page — live at https://pr-ai-landing.vercel.app. Next.js static page, Resend email capture.
+2. ✅ Auth + empty dashboard — live at https://pr-app-teal.vercel.app. NextAuth.js with email/password, JWT sessions, Neon Postgres, `users` table, protected `/dashboard` route.
+3. ✅ Manual run entry — live. `runs` and `run_contexts` tables created. Form at `/dashboard/runs/new`. Pace auto-calculated from distance + duration. HR optional. Run displays on dashboard after save.
+4. First debrief (free tier only)  ← next
 5. Strava connection
 6. Context form
 7. Recent runs + user memory
@@ -84,7 +84,20 @@ Per `RELEASE_GUIDE.md`, in order:
 10. Goal setting + onboarding polish
 11. PWA polish + push notifications
 
-Each step is deployable. Don't skip.
+### Monorepo structure
+```
+PR.ai/
+├── apps/
+│   ├── landing/    → https://pr-ai-landing.vercel.app
+│   └── app/        → https://pr-app-teal.vercel.app
+├── docs/
+├── prompts/
+├── test/
+└── PROJECT_STATE.md
+```
+
+### Runner friend validation
+Moved from Phase 0 to Phase 1. Target: show sample debriefs to 3 runner friends after Step 4 ships, before Step 5.
 
 ---
 
