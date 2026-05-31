@@ -34,6 +34,7 @@ export default async function DashboardPage() {
           <span className={styles.tierPill}>
             {session.user?.tier === "paid" ? "PAID" : session.user?.tier === "trial" ? "TRIAL" : "FREE"}
           </span>
+          <Link href="/dashboard/settings" className={styles.settingsLink}>Settings</Link>
           <SignOutButton />
         </div>
       </nav>

@@ -1,0 +1,300 @@
+.wrap {
+  min-height: 100vh;
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 0 2rem 5rem;
+}
+
+.nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1.6rem 0;
+  border-bottom: 1px solid var(--line);
+}
+
+.back {
+  font-family: var(--mono);
+  font-size: 0.72rem;
+  color: var(--fg-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  padding: 6px 10px;
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  transition: color 0.15s, border-color 0.15s;
+}
+
+.back:hover { color: var(--fg); border-color: var(--fg-dim); }
+
+.logo {
+  font-family: var(--serif);
+  font-size: 1.3rem;
+  font-weight: 500;
+  letter-spacing: -0.02em;
+}
+.logo .mark { color: var(--fg); }
+.logo .dot { color: var(--accent); }
+.logo .tail { color: var(--fg-dim); }
+
+.hero {
+  padding: 3.5rem 0 2.5rem;
+}
+
+.eyebrow {
+  font-family: var(--mono);
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+  color: var(--fg-dim);
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  margin-bottom: 1.2rem;
+}
+
+.eyebrowDot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--accent);
+}
+
+.title {
+  font-family: var(--serif);
+  font-size: clamp(2.2rem, 5vw, 3.4rem);
+  font-weight: 400;
+  letter-spacing: -0.035em;
+  line-height: 1.05;
+  margin-bottom: 0.7rem;
+}
+
+.sub {
+  font-family: var(--serif);
+  font-weight: 300;
+  color: var(--fg-dim);
+  font-size: 1.05rem;
+  line-height: 1.5;
+}
+
+.flashSuccess,
+.flashError {
+  border-radius: 6px;
+  padding: 1rem 1.3rem;
+  margin-bottom: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.flashSuccess {
+  background: rgba(212, 255, 58, 0.06);
+  border: 1px solid rgba(212, 255, 58, 0.3);
+}
+
+.flashError {
+  background: rgba(255, 107, 90, 0.06);
+  border: 1px solid rgba(255, 107, 90, 0.3);
+}
+
+.flashLabel {
+  font-family: var(--mono);
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  font-weight: 600;
+}
+
+.flashSuccess .flashLabel { color: var(--accent); }
+.flashError .flashLabel { color: var(--danger); }
+
+.flashMsg {
+  font-family: var(--serif);
+  font-weight: 300;
+  font-size: 0.95rem;
+  color: var(--fg);
+}
+
+.cardWrap {
+  background: var(--bg-elev);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 2rem 2.2rem;
+}
+
+.cardHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 1.5rem;
+}
+
+.cardTitle {
+  font-family: var(--serif);
+  font-size: 1.6rem;
+  font-weight: 500;
+  letter-spacing: -0.025em;
+  margin-bottom: 0.3rem;
+}
+
+.cardSub {
+  font-family: var(--mono);
+  font-size: 0.78rem;
+  color: var(--fg-dim);
+}
+
+.statusPill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-family: var(--mono);
+  font-size: 0.7rem;
+  color: var(--fg-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  padding: 5px 11px;
+  border: 1px solid var(--line);
+  border-radius: 4px;
+}
+
+.statusDot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+}
+
+.statusDotOn { background: var(--accent); }
+.statusDotOff { background: var(--fg-faint); }
+
+.cardMeta {
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+  margin-bottom: 1.6rem;
+  padding-top: 1.2rem;
+  border-top: 1px solid var(--line);
+}
+
+.metaRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+}
+
+.metaKey {
+  font-family: var(--mono);
+  font-size: 0.7rem;
+  color: var(--fg-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+}
+
+.metaVal {
+  font-family: var(--mono);
+  font-size: 0.85rem;
+  color: var(--fg);
+}
+
+.controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.8rem;
+  margin-top: 0.6rem;
+}
+
+.connectBtn {
+  display: inline-block;
+  background: var(--accent);
+  color: var(--bg);
+  font-family: var(--mono);
+  font-size: 0.78rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  padding: 0.95rem 1.6rem;
+  border-radius: 4px;
+  transition: background 0.15s;
+  cursor: pointer;
+}
+
+.connectBtn:hover {
+  background: #e1ff5a;
+}
+
+.syncBtn {
+  background: var(--accent);
+  color: var(--bg);
+  font-family: var(--mono);
+  font-size: 0.78rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  padding: 0.85rem 1.4rem;
+  border-radius: 4px;
+  border: none;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.syncBtn:hover:not(:disabled) {
+  background: #e1ff5a;
+}
+
+.syncBtn:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.disconnectBtn {
+  background: transparent;
+  color: var(--fg-dim);
+  font-family: var(--mono);
+  font-size: 0.72rem;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  padding: 0.85rem 1.3rem;
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  cursor: pointer;
+  transition: border-color 0.15s, color 0.15s;
+}
+
+.disconnectBtn:hover:not(:disabled) {
+  color: var(--danger);
+  border-color: var(--danger);
+}
+
+.disconnectBtn:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.msg {
+  font-family: var(--mono);
+  font-size: 0.75rem;
+  color: var(--fg-dim);
+  margin-left: 0.3rem;
+}
+
+.cardNote {
+  margin-top: 1.2rem;
+  font-family: var(--mono);
+  font-size: 0.72rem;
+  color: var(--fg-faint);
+  line-height: 1.6;
+}
+
+.cardNote code {
+  background: rgba(255, 255, 255, 0.05);
+  padding: 1px 6px;
+  border-radius: 3px;
+  font-size: 0.95em;
+}
+
+@media (max-width: 600px) {
+  .wrap { padding: 0 1.4rem 4rem; }
+  .cardWrap { padding: 1.5rem 1.4rem; }
+  .controls { flex-direction: column; align-items: stretch; }
+}

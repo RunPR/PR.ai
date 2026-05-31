@@ -8,7 +8,10 @@
     "start": "next start",
     "db:init": "node lib/db-init.js",
     "db:migrate-step3": "node lib/db-migrate-step3.js",
-    "db:migrate-step4": "node lib/db-migrate-step4.js"
+    "db:migrate-step4": "node lib/db-migrate-step4.js",
+    "db:migrate-step5": "node lib/db-migrate-step5.js",
+    "strava:webhook:create": "node lib/strava-webhook-setup.js",
+    "strava:webhook:list": "node lib/strava-webhook-setup.js --list"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.98.0",

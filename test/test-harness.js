@@ -849,7 +849,8 @@ async function main() {
   }
 
   // Write results to file
-  const outputFile = "/mnt/user-data/outputs/test-results.json";
+  const outputFile = `${__dirname}/results/test-results-latest.json`;
+  fs.mkdirSync(`${__dirname}/results`, { recursive: true });
   fs.writeFileSync(outputFile, JSON.stringify(results, null, 2));
   console.log(`\n✅ Results saved to ${outputFile}`);
 

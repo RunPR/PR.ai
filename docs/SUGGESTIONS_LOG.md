@@ -153,6 +153,27 @@ A running track of all suggestions made for the product. Each entry has a status
 - **Trigger to revisit:** Before public beta (Phase 3), OR when any prompt change causes a race-day regression in the test suite.
 - **Cost:** Prompt-only change. ~10 lines.
 
+### B-014 — Latest debrief card on dashboard (build next — between Step 5 and Step 6)
+- **Date:** 2026-05-31
+- **What:** A card at the top of the dashboard showing the most recent debrief in full — above the runs list. Subtitle shows the run date, distance, and type. Small link to the full run page. Runs list stays below as the history log.
+- **Why:** The debrief is the product. Currently a user has to click into a run to see it — that buries the core value. Opening the app and having the coach already talking to you is the right first impression.
+- **Priority:** Build immediately after Step 5 prod deployment, before Step 6 (context form).
+- **Cost:** One extra query on the dashboard page (`SELECT * FROM debriefs WHERE user_id = ... ORDER BY created_at DESC LIMIT 1`), a new card component, no schema changes.
+
+### B-015 — Tighten free-tier word count compliance
+- **Date:** 2026-05-31
+- **What:** Free-tier debriefs are consistently running 130-175 words against an 80-100 word target. Prompt tune needed — likely strengthen the word limit instruction or add an explicit hard cap.
+- **Why deferred:** Scenarios pass behaviorally. This becomes a real issue at Step 8 when free vs paid distinction drives billing.
+- **Trigger to revisit:** Before Step 8 (paid tier + billing). Run test suite after any prompt change to confirm it doesn't break other scenarios.
+- **Cost:** Prompt-only change, re-run full test suite to validate.
+
+### B-013 — Dashboard summary row (weekly mileage, avg pace, streak)
+- **Date:** 2026-05-31
+- **What:** Three-stat summary row above the runs list, Whoop-style. Weekly mileage (current week), 7-day average pace, and current run streak (consecutive days). All computable from the existing `runs` table — no new data model needed.
+- **Why deferred:** MVP dashboard is functional without it. This is a perceived-value upgrade, not a core feature. Build it once the main flow is solid and you have real users to impress.
+- **Trigger to revisit:** After Step 8 (paid tier) ships. This is a good thing to have polished before showing the app to paying users.
+- **Cost:** One DB query + a summary component. Low lift.
+
 ### B-012 — Expand test suite injury coverage
 - **Date:** 2026-05-15 (surfaced during Phase 0 test suite run)
 - **What:** Add 3-4 injury scenarios to the test suite covering different body parts: knee pain mid-run, lower back stiffness, hamstring twinge, shin pain. Confirms the INJURY RULE fires across the full surface area, not just achilles (which is what C1 tested).
