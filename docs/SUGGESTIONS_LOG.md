@@ -153,12 +153,20 @@ A running track of all suggestions made for the product. Each entry has a status
 - **Trigger to revisit:** Before public beta (Phase 3), OR when any prompt change causes a race-day regression in the test suite.
 - **Cost:** Prompt-only change. ~10 lines.
 
-### B-014 — Latest debrief card on dashboard (build next — between Step 5 and Step 6)
+### B-014 — Latest debrief card on dashboard (✅ shipped — Step 5.5)
 - **Date:** 2026-05-31
 - **What:** A card at the top of the dashboard showing the most recent debrief in full — above the runs list. Subtitle shows the run date, distance, and type. Small link to the full run page. Runs list stays below as the history log.
 - **Why:** The debrief is the product. Currently a user has to click into a run to see it — that buries the core value. Opening the app and having the coach already talking to you is the right first impression.
 - **Priority:** Build immediately after Step 5 prod deployment, before Step 6 (context form).
 - **Cost:** One extra query on the dashboard page (`SELECT * FROM debriefs WHERE user_id = ... ORDER BY created_at DESC LIMIT 1`), a new card component, no schema changes.
+
+### B-016 — Run type defaulting to "easy" — two root causes
+- **Date:** 2026-05-31
+- **What:** Most runs (both manual and Strava) show as "Easy run" regardless of what they were.
+- **Root cause 1 (manual):** The log-a-run form defaults the Type dropdown to "easy". Users don't change it. Fix: either default to a neutral "Select type…" placeholder (require selection) or reorder the dropdown so the most common choices are prominent.
+- **Root cause 2 (Strava):** `inferRunType()` in `lib/strava.js` falls back to `"easy"` for any activity under 16km without a `workout_type` tag set in Strava. Most users never tag workout types. Fix: widen the heuristic — e.g. use pace relative to goal MP to guess tempo/MP run, use distance bands more aggressively, or map Strava's `sport_type` field more carefully.
+- **Trigger to revisit:** Before Step 7 (recent runs context), since run type feeds into the coaching prompt's pattern analysis.
+- **Cost:** Form change is trivial. Strava heuristic improvement is a few lines in `lib/strava.js`.
 
 ### B-015 — Tighten free-tier word count compliance
 - **Date:** 2026-05-31

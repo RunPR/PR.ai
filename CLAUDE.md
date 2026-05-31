@@ -180,8 +180,8 @@ SKILL v4.1 validated on Haiku 4.5 + Sonnet 4.6. All 15 test scenarios passed. Ba
 | 2. Auth + dashboard | ✅ Done | NextAuth, Neon Postgres, `/dashboard` |
 | 3. Manual run entry | ✅ Done | `/dashboard/runs/new`, runs + run_contexts tables |
 | 4. First debrief | ✅ Done | Streaming, cached in DB, `/dashboard/runs/[id]` |
-| 5. Strava connection | 🔄 In progress | Local done, prod deployment pending |
-| 5.5 Latest debrief card | 🔄 Next | Show most recent debrief on dashboard above runs list — build before Step 6 |
+| 5. Strava connection | ✅ Done | OAuth + webhook + sync live in prod |
+| 5.5 Dashboard polish | ✅ Done | Latest run card + debrief preview, source badge, smart debrief CTA, empty state fix |
 | 6. Context form | ⬜ | |
 | 7. Recent runs + user memory | ⬜ | |
 | 8. Paid tier + billing | ⬜ | Stripe, tier branching in debrief route |
@@ -191,44 +191,21 @@ SKILL v4.1 validated on Haiku 4.5 + Sonnet 4.6. All 15 test scenarios passed. Ba
 
 ---
 
-## Step 5 — where things were left off
+## Step 6 — context form (next to build)
 
-Step 5 (Strava) is **built but not yet set up or tested.** All files are in the repo.
+**Problem:** Strava runs have no context (sleep, energy, stress). When a user clicks "Get debrief →" on a Strava run, the debrief generates with no context — triggering the MISSING-DATA guardrail every time. Manual runs capture context at log time, so they're fine.
 
-**What still needs to happen:**
+**What to build:** When a user navigates to `/dashboard/runs/[id]` for a run with no context, show a lightweight context form (sleep hours, sleep quality, energy, stress, optional notes) before the debrief generates. After submitting, save to `run_contexts` and proceed to the debrief.
 
-1. Add env vars to `.env.local` and Vercel:
-   ```
-   STRAVA_CLIENT_ID=
-   STRAVA_CLIENT_SECRET=
-   STRAVA_WEBHOOK_VERIFY_TOKEN=  (generate with: openssl rand -hex 16)
-   ```
+**Approach:**
+- Check in `app/dashboard/runs/[id]/page.jsx` whether `run_contexts` row exists for this run
+- If missing context → render the context form inline (not a redirect — keep it on the same page)
+- Include a "Skip" option that generates the debrief without context
+- On submit → POST to a new `/api/runs/[id]/context` route → save to `run_contexts` → stream debrief
 
-2. Add scripts to `package.json`:
-   ```json
-   "db:migrate-step5": "node lib/db-migrate-step5.js",
-   "strava:webhook:create": "node lib/strava-webhook-setup.js",
-   "strava:webhook:list": "node lib/strava-webhook-setup.js --list"
-   ```
+**No schema changes needed.** `run_contexts` table already exists from Step 3.
 
-3. Run migration: `npm run db:migrate-step5`
-
-4. Apply dashboard nav patch — add Settings link next to Sign Out in `app/dashboard/page.jsx`:
-   ```jsx
-   <Link href="/dashboard/settings" className={styles.settingsLink}>Settings</Link>
-   ```
-   Add `.settingsLink` to `dashboard.module.css` (same style as `.signOut`).
-
-5. Set Strava callback domain to `localhost` → test OAuth locally → confirm runs import.
-
-6. Deploy → set callback domain to `pr-app-teal.vercel.app` → run production migration.
-
-7. Register webhook (one-time, after prod deploy):
-   ```bash
-   PROD_URL=https://pr-app-teal.vercel.app node lib/strava-webhook-setup.js
-   ```
-
-8. Post a test run to Strava → verify it appears on the dashboard.
+**Known bug to fix in this step (B-016):** Run type defaults to "easy" for most runs. Fix the manual form default and improve `inferRunType()` heuristics in `lib/strava.js`.
 
 ---
 

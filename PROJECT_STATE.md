@@ -1,6 +1,6 @@
 # PR.ai — Project State
 
-**As of:** May 22, 2026
+**As of:** May 31, 2026
 
 This document is the single source of truth for what's done, what's in progress, and what's next. Update after every significant work session.
 
@@ -9,28 +9,29 @@ This document is the single source of truth for what's done, what's in progress,
 ## Where we are
 
 **Phase 0 — Skill hardening:** ✓ Complete (closed May 21, 2026).
-
-All 15 test scenarios passed on Haiku 4.5 and Sonnet 4.6. Baseline exported as `test/rca_baseline_v4.1_2026-05-21.json`. `test/test_suite.jsx` drift fixed — now correctly uses v4.1 prompt with `{{tier}}` interpolation. Model validation on production models is complete.
+**Phase 1 — The 11-step build:** In progress. Steps 1–5.5 complete.
 
 ---
 
 ## What's been built (artifacts)
 
-| File | Purpose | Status |
+| File / Area | Purpose | Status |
 |---|---|---|
-| `docs/SKILL.md` | System prompt, user message template, field reference, API call example | v4.1, locked pending model validation |
-| `docs/DATABASE_SCHEMA.md` | Postgres schema for MVP (11 tables) | Final, validated against all backlog items |
-| `docs/ARCHITECTURE.md` | Three-layer architecture, mermaid diagrams, codebase structure, deployment topology | Final |
+| `docs/SKILL.md` | System prompt spec, user message template, field reference | v4.1, locked |
+| `docs/DATABASE_SCHEMA.md` | Postgres schema for MVP | Final |
+| `docs/ARCHITECTURE.md` | Three-layer architecture, codebase structure, deployment topology | Final |
 | `docs/RELEASE_GUIDE.md` | Phase 0-4 release plan, stack decisions, 11-step build order | Final |
-| `docs/TEST_SUITE.md` | 15 scenarios with expected behaviors | Final, validation in progress |
-| `docs/SUGGESTIONS_LOG.md` | S-001 through S-015 (MVP), B-001 through B-012 (backlog) | Living document |
-| `docs/RCA_MANIFEST.md` | Quick reference manifest | Final |
-| `prompts/system-prompt.txt` | The prompt as plain text | v4.1 |
-| `test/test-harness.js` | Node.js harness to run scenarios against the API | Ready to run |
-| `test/test_suite.jsx` | React-based interactive test runner UI | v4.1, drift fixed |
-| `test/rca_baseline_v4.1_2026-05-21.json` | Baseline test results, all scenarios | Exported |
-| `apps/landing/` | Next.js landing page + Resend email capture | Live at https://pr-ai-landing.vercel.app |
-| `apps/app/` | Next.js app — auth (email/password), dashboard, runs, Neon Postgres | Live at https://pr-app-teal.vercel.app |
+| `docs/TEST_SUITE.md` | 15 test scenarios with expected behaviors | Final |
+| `docs/SUGGESTIONS_LOG.md` | Full suggestions + backlog log (S-001–S-010, B-001–B-016) | Living document |
+| `prompts/system-prompt.txt` | Coaching prompt source of truth | v4.1 |
+| `test/test-harness.js` | Node.js harness — runs all 15 scenarios against Anthropic API | Ready, run between steps |
+| `test/rca_baseline_v4.1_2026-05-21.json` | Baseline test results | Exported May 21 |
+| `apps/landing/` | Next.js landing page + Resend waitlist | Live at https://pr-ai-landing.vercel.app |
+| `apps/web/` | Next.js product app — auth, dashboard, runs, debriefs, Strava | Live at https://pr-app-teal.vercel.app |
+| `apps/web/lib/strava.js` | Strava API client, token refresh, activity mapping | Live |
+| `apps/web/lib/db-migrate-step5.js` | `strava_connections` table migration | Run in prod |
+| `apps/web/app/api/strava/` | connect / callback / sync / webhook / disconnect routes | Live |
+| `apps/web/app/dashboard/settings/` | Settings page — Strava connect/disconnect/sync UI | Live |
 
 ---
 
@@ -39,87 +40,69 @@ All 15 test scenarios passed on Haiku 4.5 and Sonnet 4.6. Baseline exported as `
 ### Product
 - **Category:** AI insights, pacing, and goal-tied coaching. Not a wearable, not a static plan generator, not a generic activity summarizer.
 - **Target user:** Experienced marathon runners chasing a specific time barrier.
-- **Competitive positioning:** *"Strava tells you what you did. Garmin tells you what to run. Runna gives you a plan. We make all of it fit your life and your goal."*
+- **Positioning:** *"Strava tells you what you did. Garmin tells you what to run. Runna gives you a plan. We make all of it fit your life and your goal."*
 
 ### Monetization
 - **Model:** Freemium with 14-day reverse trial.
-- **Free tier:** Daily debrief, ~100 words, today's run only, one generic recovery action. Run on Haiku 4.5.
-- **Paid tier:** Daily debrief PLUS `THE WEEK AHEAD` (forward-looking adjustment block), pattern analysis across recent runs, plan adaptation. Run on Sonnet 4.6.
+- **Free tier:** Debrief only (~100 words), Haiku 4.5.
+- **Paid tier:** Debrief + THE WEEK AHEAD, pattern analysis, plan adaptation, Sonnet 4.6.
 - **Price:** $14.99/month.
-- **Moat:** Plan adaptation tied to a goal time — the thing Strava AI structurally can't do and Garmin doesn't do for marathon runners.
 
 ### Technical
-- **Frontend:** Next.js (React) as a PWA. Single codebase. Mobile-first, but a web app at the storage layer.
-- **Backend:** Node.js (Next.js API routes for MVP).
-- **Database:** PostgreSQL.
-- **Hosting:** Vercel for frontend, Railway/Render for backend + database.
-- **LLM:** Anthropic SDK (Node). Haiku 4.5 free, Sonnet 4.6 paid.
-- **Billing:** Stripe.
-- **Architecture:** Three-layer separation (presentation / coaching / data) with strict service-module boundaries. See `ARCHITECTURE.md`.
+- **Stack:** Next.js 14 (App Router), NextAuth v4, Neon Postgres (`@vercel/postgres`), Anthropic SDK, Strava OAuth + webhooks, Vercel hosting.
+- **Debrief caching:** Generated once, stored in `debriefs` table, served from DB on revisit.
+- **Strava runs:** Don't auto-debrief. User clicks "Get debrief →" to trigger generation.
+- **Free tier hardcoded:** `MODEL = "claude-haiku-4-5-20251001"`, `TIER = "free"`. Step 8 adds branching.
+- **Goal context:** Not wired yet (Step 10). MISSING-DATA RULE handles it gracefully.
 
 ### Test suite
-- 15 scenarios across 4 categories: core runs (A1-A5), edge cases (B1-B4), sensitive content (C1-C3), robustness (D1-D3).
-- Exit criteria: 100% pass on both tiers, word counts respect tier limits, no regressions when prompt is changed.
-- All 15 passed on Haiku 4.5 and Sonnet 4.6. Baseline at `test/rca_baseline_v4.1_2026-05-21.json`.
-- One issue surfaced and fixed during Phase 0 (C1 paid using "tendinitis") → INJURY RULE added.
-- Length philosophy updated (S-011) — WEEK AHEAD can flex when content genuinely demands it.
+- 15 scenarios: core runs (A1–A5), edge cases (B1–B4), sensitive content (C1–C3), robustness (D1–D3).
+- Last run: May 31, 2026 — 15/15 passed. Haiku 4.5: 9/9, Sonnet 4.6: 6/6.
+- Note: free-tier word counts running 130–175 words vs 80–100 target (B-015, fix before Step 8).
 
 ---
 
-## What's next (in order)
+## Phase 1 step status
 
-### Phase 1 — The 11-step build
-**Status:** In progress
+| Step | Status | Notes |
+|---|---|---|
+| 1. Landing page | ✅ Done | `apps/landing/`, Resend email capture |
+| 2. Auth + dashboard | ✅ Done | NextAuth, Neon Postgres, `/dashboard` |
+| 3. Manual run entry | ✅ Done | `/dashboard/runs/new`, runs + run_contexts tables |
+| 4. First debrief | ✅ Done | Streaming, cached in DB, `/dashboard/runs/[id]` |
+| 5. Strava connection | ✅ Done | OAuth + webhook + sync live in prod |
+| 5.5 Dashboard polish | ✅ Done | Latest run card, debrief preview, source badge, smart CTA, empty state fix |
+| 6. Context form | 🔄 Next | Context capture for Strava runs before debrief + B-016 run type fix |
+| 7. Recent runs + user memory | ⬜ | |
+| 8. Paid tier + billing | ⬜ | Stripe, tier branching, reverse trial |
+| 9. Plan ingestion | ⬜ | |
+| 10. Goal setting + onboarding | ⬜ | Goals table, race/time context in debrief |
+| 11. PWA polish | ⬜ | Web manifest, service worker |
 
-Per `RELEASE_GUIDE.md`, in order:
-1. ✅ Landing page — live at https://pr-ai-landing.vercel.app. Next.js static page, Resend email capture.
-2. ✅ Auth + empty dashboard — live at https://pr-app-teal.vercel.app. NextAuth.js with email/password, JWT sessions, Neon Postgres, `users` table, protected `/dashboard` route.
-3. ✅ Manual run entry — live. `runs` and `run_contexts` tables created. Form at `/dashboard/runs/new`. Pace auto-calculated from distance + duration. HR optional. Run displays on dashboard after save.
-4. ✅ Debrief generation — live. `debriefs` table created. Anthropic SDK integrated. Free tier (Haiku) produces ~100-word debriefs; paid tier (Sonnet) adds WEEK AHEAD. System prompt v4.1 governs all outputs.
-5. Strava connection  ← next
-6. Context form
-7. Recent runs + user memory
-8. Paid tier + reverse trial + billing
-9. Plan ingestion
-10. Goal setting + onboarding polish
-11. PWA polish + push notifications
+---
 
-### Monorepo structure
-```
-PR.ai/
-├── apps/
-│   ├── landing/    → https://pr-ai-landing.vercel.app
-│   └── app/        → https://pr-app-teal.vercel.app
-├── docs/
-├── prompts/
-├── test/
-└── PROJECT_STATE.md
-```
+## Known bugs / pre-step-6 fixes
 
-### Runner friend validation
-Moved from Phase 0 to Phase 1. Target: show sample debriefs to 3 runner friends after Step 4 ships, before Step 5.
+- **B-016 — Run type defaults to "easy":** Manual form defaults to "easy" and users don't change it. Strava `inferRunType()` also falls back to "easy" for most activities. Fix in Step 6.
 
 ---
 
 ## Open questions / known risks
 
-1. **Model regression risk.** Test suite was designed and validated against Opus 4.7. Sonnet 4.6 and Haiku 4.5 may produce subtly different outputs. The diagnostic-reasoning scenarios (A3, C1) and the nuanced sensitive-content scenarios (C2, C3) are the most likely places for regression. Mitigation: run the harness, evaluate, adjust the prompt only if needed.
-
-2. **Strava API dependency.** The whole MVP depends on Strava webhooks and OAuth working reliably. Strava's rate limits and TOS are the primary external risk. Mitigation: build with caching, graceful degradation, and a manual-entry fallback.
-
-3. **Memory extraction safety.** S-009 (user memory) involves an LLM call after each debrief to extract durable facts about the user. The extraction prompt has not yet been written. It needs careful safety constraints — no weight, no medications, no inferred diagnoses. Will be designed during Phase 1 Step 7.
-
-4. **Free tier cost at scale.** Even on Haiku, every free user costs ~$0.08/month with no revenue. If the freemium funnel doesn't convert at 8-15%, the unit economics need revisiting. Mitigation: track cost per user from day 1, move to batch API or aggressive caching if needed.
-
-5. **Competitive timing.** Strava (Athlete Intelligence), Whoop (My Memory + Proactive Check-Ins), and Garmin are all moving into this space. Mitigation: speed to a defensible user base matters more than feature breadth. Don't over-build.
+1. **Free tier word count compliance (B-015):** Free-tier debriefs running 130–175 words vs 80–100 target. Needs prompt tune before Step 8 when free/paid distinction drives billing.
+2. **Strava API dependency:** Webhooks and OAuth are the primary external risk. Built with caching and graceful degradation. Manual entry is the fallback.
+3. **Memory extraction safety (Step 7):** S-009 (user memory) involves LLM call after each debrief to extract durable facts. Extraction prompt not yet written — needs safety constraints (no weight, no medications, no inferred diagnoses).
+4. **Free tier cost at scale:** Even on Haiku, every free user costs ~$0.08/month with no revenue. Track from day 1.
+5. **Competitive timing:** Strava, Whoop, and Garmin all moving into this space. Speed to defensible user base matters more than feature breadth.
 
 ---
 
-## Long-term backlog highlights (post-MVP)
+## Post-MVP backlog highlights
 
-Tracked in detail in `SUGGESTIONS_LOG.md`. Most important post-MVP items:
+Tracked in full in `docs/SUGGESTIONS_LOG.md`.
 
-- **B-007 — Workout sync to watch.** Critical post-MVP feature. The line between "$5 advice app" and "$15 coaching service." Runna's reviews specifically praise the magic of "the right workout shows up on my watch."
-- **B-003 — Wearable integration as v2 paid hook.** Stop logging context — read it from the watch.
-- **B-010 — Conversational follow-up.** Multi-turn coaching, the obvious v2 paid feature.
-- **B-001 — Weekly summary.** Sunday "week in review" for retention.
+- **B-007 — Workout sync to watch.** The line between "$5 advice app" and "$15 coaching service."
+- **B-013 — Dashboard summary row.** Weekly mileage, avg pace, streak. Build after Step 8.
+- **B-010 — Conversational follow-up.** Multi-turn coaching, obvious v2 paid feature.
+- **B-008 — Proactive check-ins.** Coach initiates when context warrants. Retention play.
+- **B-003 — Wearable integration.** Stop manual logging — read from the watch.

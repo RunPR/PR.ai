@@ -111,6 +111,90 @@
   line-height: 1;
 }
 
+/* ─── LATEST RUN CARD ────────────────────────────────────────── */
+.latestRun {
+  background: var(--bg-elev);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 2rem 2.2rem;
+  margin-bottom: 2.5rem;
+}
+
+.latestRunHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 1.4rem;
+}
+
+.latestRunEyebrow {
+  font-family: var(--mono);
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+  color: var(--fg-dim);
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  margin-bottom: 0.5rem;
+}
+
+.latestRunDate {
+  font-family: var(--serif);
+  font-size: 1.7rem;
+  font-weight: 500;
+  letter-spacing: -0.025em;
+  color: var(--fg);
+  line-height: 1;
+}
+
+.runTypePill {
+  font-family: var(--mono);
+  font-size: 0.68rem;
+  color: var(--accent);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  background: rgba(212, 255, 58, 0.08);
+  padding: 4px 10px;
+  border-radius: 3px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.latestRunStats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1.4rem 2.2rem;
+  padding: 1.2rem 0;
+  border-top: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+  margin-bottom: 1.3rem;
+}
+
+.latestRunPreview {
+  font-family: var(--serif);
+  font-weight: 300;
+  font-style: italic;
+  font-size: 1rem;
+  line-height: 1.65;
+  color: var(--fg-dim);
+  margin-bottom: 1.3rem;
+}
+
+.latestRunLink {
+  font-family: var(--mono);
+  font-size: 0.72rem;
+  color: var(--accent);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  font-weight: 600;
+  transition: opacity 0.15s;
+}
+
+.latestRunLink:hover {
+  opacity: 0.7;
+}
+
 /* ─── EMPTY STATE ─────────────────────────────────────────────── */
 .empty {
   background: var(--bg-elev);
@@ -168,6 +252,23 @@
   font-size: 0.72rem;
   color: var(--fg-faint);
   letter-spacing: 0.04em;
+}
+
+.sourceTag {
+  font-family: var(--mono);
+  font-size: 0.62rem;
+  color: var(--fg-faint);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  border: 1px solid var(--line);
+  padding: 2px 7px;
+  border-radius: 3px;
+}
+
+.logRunPrompt {
+  margin-top: 0.5rem;
+  display: flex;
+  justify-content: flex-end;
 }
 
 /* ─── RUNS LIST ──────────────────────────────────────────────── */

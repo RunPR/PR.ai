@@ -10,13 +10,13 @@ A pragmatic, solo-builder release plan. Built around two principles:
 
 | Layer | Choice | Why |
 |---|---|---|
-| Frontend | Next.js (React) as a PWA | Single codebase, Arturo knows JS, smooth PWA story, React Native path open later. |
+| Frontend | Next.js 14 (App Router) as a PWA | Single codebase, Arturo knows JS, smooth PWA story, React Native path open later. |
 | Backend | Node.js (Next.js API routes) | Single language for MVP. Split into separate service if/when Python ML features are needed. |
-| Database | PostgreSQL | Reliable, flexible (JSON columns for evolving shapes), scales as far as we'll need. |
-| Hosting | Vercel (frontend) + Railway/Render (backend + DB) | Cheapest viable path. Migrate later if needed. |
-| LLM | Anthropic SDK (Node) | Sonnet 4 for paid, Haiku for free tier later (B-002). |
-| Billing | Stripe | No alternative worth considering. |
-| Auth | Next-Auth + Google OAuth + email/password | Standard, well-documented. |
+| Database | Neon Postgres (`@vercel/postgres`) | Serverless Postgres, integrates cleanly with Vercel, scales as far as we'll need. |
+| Hosting | Vercel (both apps) | Both `apps/landing` and `apps/web` deploy independently. Monorepo on GitHub. |
+| LLM | Anthropic SDK (Node) — Haiku 4.5 free, Sonnet 4.6 paid | Haiku for free tier, Sonnet for paid. Branching added in Step 8. |
+| Billing | Stripe | No alternative worth considering. Step 8. |
+| Auth | NextAuth v4, Credentials provider (JWT sessions) | Email/password live. Google OAuth deferred to post-MVP. |
 
 ---
 
@@ -44,20 +44,11 @@ See `ARCHITECTURE_DIAGRAM.md` for the visual.
 
 ---
 
-## Phase 0 — Skill hardening (current phase)
+## Phase 0 — Skill hardening ✅ Complete (May 21, 2026)
 
 **Goal:** SKILL v4 → production-ready.
 
-**Deliverable:** All 15 scenarios in `TEST_SUITE.md` pass at both free and
-paid tiers.
-
-**Exit criteria:**
-- 100% pass on the test suite
-- Word counts within 15% of tier limits across all scenarios
-- 3 runner friends shown the output, response is "this is useful"
-
-**Time budget:** 2 weeks max. If still tweaking after that, stop polishing
-and move to Phase 1.
+**Result:** All 15 scenarios passed on Haiku 4.5 and Sonnet 4.6. Prompt locked as v4.1. Baseline at `test/rca_baseline_v4.1_2026-05-21.json`. Note: free-tier word counts run 130–175 words vs 80–100 target — flagged as B-015, fix before Step 8.
 
 ---
 
@@ -66,47 +57,43 @@ and move to Phase 1.
 Each step is a working, deployable system. Ship each one before starting the
 next. No exceptions.
 
-### Step 1 — Landing page + waitlist ✓
-- Static Next.js page on Vercel
-- Email capture → stored in a simple DB or Mailchimp
-- Validates: do people want this at all?
-- **Live:** https://pr-ai-git-main-runpr.vercel.app/
-- **Weekend: 1**
+### Step 1 — Landing page + waitlist ✅ Done
+- Static Next.js page on Vercel, Resend email capture
+- **Live:** https://pr-ai-landing.vercel.app
 
-### Step 2 — Auth + empty dashboard
-- Next-Auth with email/password + Google OAuth
-- Postgres set up on Railway with `users` table
-- After login: empty dashboard saying "no runs yet"
-- **Weekend: 1**
+### Step 2 — Auth + empty dashboard ✅ Done
+- NextAuth v4, email/password, JWT sessions
+- Neon Postgres, `users` table, protected `/dashboard` route
+- **Live:** https://pr-app-teal.vercel.app
 
-### Step 3 — Manual run entry
-- Form: date, distance, duration, splits, run_type, RPE
-- Save to `runs` table
+### Step 3 — Manual run entry ✅ Done
+- Form at `/dashboard/runs/new` — date, type, distance, duration, HR, RPE, notes
+- `runs` + `run_contexts` tables (sleep, energy, stress)
 - Dashboard lists past runs
-- Validates: the data layer works end-to-end
-- **Weekend: 1**
 
-### Step 4 — First debrief (free tier only)
-- Build `/services/coaching` with the skill prompt
-- After manual run entry, generate a debrief
-- Save to `debriefs` table, render on the run detail page
-- ⚠️ Free tier only at this step — no WEEK AHEAD, no tier logic yet
-- **Validates: the skill works end-to-end in production**
-- **Weekends: 1-2**
+### Step 4 — First debrief ✅ Done
+- Anthropic SDK integrated, streaming via SSE
+- `debriefs` table, cached on first generation
+- Free tier (Haiku 4.5) produces debrief only; paid tier hardcoded for now
 
-### Step 5 — Strava connection
-- OAuth flow → `strava_connections` table
-- Webhook listener → ingest new activities → `runs` table
-- Goodbye manual entry (keep the form as a fallback)
-- **Weekends: 1-2**
+### Step 5 — Strava connection ✅ Done
+- OAuth flow, `strava_connections` table, webhook listener
+- Runs auto-import on connect (30-day backfill) and on new activity
+- Manual sync available from `/dashboard/settings`
+- Webhook registered in prod, updates propagate in ~10s
 
-### Step 6 — Context form
-- Three-slider form (sleep, energy, stress) + notes
-- Triggered after a Strava run lands
-- Push notification reminds user to log within 30 minutes
-- Skippable → context fields default to "not provided"
-- Coaching service now uses context
-- **Weekend: 1**
+### Step 5.5 — Dashboard polish ✅ Done
+- Latest run card with stats + debrief preview above runs list
+- Source badge (Strava vs manual) on run rows
+- "Get debrief →" vs "View debrief →" based on debrief status
+- Empty-state fix when only one run exists
+
+### Step 6 — Context form 🔄 Next
+- Strava runs have no context (sleep/energy/stress) — MISSING-DATA guardrail fires on every debrief
+- Show context form inline on `/dashboard/runs/[id]` when no `run_contexts` row exists
+- Skippable; skip generates debrief with "not provided" fields
+- Also fixing B-016: run type defaulting to "easy" in both manual form and Strava heuristic
+- **No schema changes needed** — `run_contexts` table exists from Step 3
 
 ### Step 7 — Recent runs + user memory
 - Last 5 runs passed to coaching service

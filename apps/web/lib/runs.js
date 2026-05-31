@@ -17,9 +17,11 @@ export async function getRunsForUser(userId, limit = 20) {
       c.sleep_quality,
       c.energy,
       c.stress,
-      c.notes AS context_notes
+      c.notes AS context_notes,
+      d.status AS debrief_status
     FROM runs r
     LEFT JOIN run_contexts c ON c.run_id = r.id
+    LEFT JOIN debriefs d ON d.run_id = r.id
     WHERE r.user_id = ${userId} AND r.deleted_at IS NULL
     ORDER BY r.started_at DESC
     LIMIT ${limit}

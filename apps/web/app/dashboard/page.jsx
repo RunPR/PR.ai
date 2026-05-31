@@ -1,6 +1,7 @@
 import { getServerSession } from "next-auth";
 import { redirect } from "next/navigation";
 import Link from "next/link";
+import { sql } from "@vercel/postgres";
 import { authOptions } from "@/lib/auth";
 import { getRunsForUser } from "@/lib/runs";
 import {
@@ -21,6 +22,8 @@ export default async function DashboardPage() {
   const userId = session.user?.id;
 
   const runs = userId ? await getRunsForUser(userId, 20) : [];
+
+  const latestDebrief = userId ? await getLatestDebrief(userId) : null;
 
   return (
     <main className={styles.wrap}>
@@ -48,6 +51,8 @@ export default async function DashboardPage() {
           <h1 className={styles.title}>Hi {name}.</h1>
         </div>
 
+        {latestDebrief && <LatestDebriefCard debrief={latestDebrief} />}
+
         {runs.length === 0 ? (
           <div className={styles.empty}>
             <div className={styles.emptyLabel}>NO RUNS YET</div>
@@ -59,26 +64,39 @@ export default async function DashboardPage() {
               Log your first run
             </Link>
             <p className={styles.emptyNote}>
-              Once Strava is connected (Step 5), runs sync here automatically.
+              Strava connected? Your runs sync here automatically.
             </p>
           </div>
         ) : (
           <>
-            <div className={styles.runsHeader}>
-              <div className={styles.runsHeaderInner}>
-                <span className={styles.runsTitle}>Recent runs</span>
-                <span className={styles.runsCount}>{runs.length}</span>
-              </div>
-              <Link href="/dashboard/runs/new" className={styles.ctaSmall}>
-                + Log a run
-              </Link>
-            </div>
+            {(() => {
+              const previousRuns = latestDebrief
+                ? runs.filter(r => r.id !== latestDebrief.run_id)
+                : runs;
 
-            <div className={styles.runsList}>
-              {runs.map((run) => (
-                <RunRow key={run.id} run={run} />
-              ))}
-            </div>
+              if (previousRuns.length === 0) {
+                return (
+                  <div className={styles.logRunPrompt}>
+                    <Link href="/dashboard/runs/new" className={styles.ctaSmall}>+ Log a run</Link>
+                  </div>
+                );
+              }
+
+              return (
+                <>
+                  <div className={styles.runsHeader}>
+                    <div className={styles.runsHeaderInner}>
+                      <span className={styles.runsTitle}>{latestDebrief ? "Previous runs" : "Recent runs"}</span>
+                      <span className={styles.runsCount}>{previousRuns.length}</span>
+                    </div>
+                    <Link href="/dashboard/runs/new" className={styles.ctaSmall}>+ Log a run</Link>
+                  </div>
+                  <div className={styles.runsList}>
+                    {previousRuns.map((run) => <RunRow key={run.id} run={run} />)}
+                  </div>
+                </>
+              );
+            })()}
           </>
         )}
       </section>
@@ -86,14 +104,84 @@ export default async function DashboardPage() {
   );
 }
 
+async function getLatestDebrief(userId) {
+  const { rows } = await sql`
+    SELECT
+      d.content, d.created_at,
+      r.id AS run_id, r.started_at, r.run_type,
+      r.distance_meters, r.duration_seconds,
+      r.avg_pace_seconds_per_km, r.avg_heart_rate
+    FROM debriefs d
+    JOIN runs r ON r.id = d.run_id
+    WHERE d.user_id = ${userId} AND d.status = 'complete' AND r.deleted_at IS NULL
+    ORDER BY d.created_at DESC
+    LIMIT 1
+  `;
+  return rows[0] || null;
+}
+
+function getDebriefPreview(content) {
+  const withoutHeader = content.replace(/^\*\*THE DEBRIEF\*\*\n+/i, "").trim();
+  const firstParagraph = withoutHeader.split(/\n\s*\n/)[0].trim();
+  const plain = firstParagraph.replace(/\*\*([^*]+)\*\*/g, "$1");
+  return plain.length <= 220 ? plain : plain.slice(0, 217) + "…";
+}
+
+function LatestDebriefCard({ debrief }) {
+  const preview = getDebriefPreview(debrief.content);
+  return (
+    <div className={styles.latestRun}>
+      <div className={styles.latestRunHeader}>
+        <div>
+          <span className={styles.latestRunEyebrow}>
+            <span className={styles.dot2} />
+            <span>Latest run</span>
+          </span>
+          <div className={styles.latestRunDate}>{formatDate(debrief.started_at)}</div>
+        </div>
+        <span className={styles.runTypePill}>{RUN_TYPE_LABELS[debrief.run_type] || debrief.run_type}</span>
+      </div>
+
+      <div className={styles.latestRunStats}>
+        <div className={styles.stat}>
+          <span className={styles.statLabel}>Distance</span>
+          <span className={styles.statVal}>{formatDistance(debrief.distance_meters)}</span>
+        </div>
+        <div className={styles.stat}>
+          <span className={styles.statLabel}>Duration</span>
+          <span className={styles.statVal}>{formatDuration(debrief.duration_seconds)}</span>
+        </div>
+        <div className={styles.stat}>
+          <span className={styles.statLabel}>Pace</span>
+          <span className={styles.statVal}>{formatPacePerMile(debrief.avg_pace_seconds_per_km)}</span>
+        </div>
+        {debrief.avg_heart_rate && (
+          <div className={styles.stat}>
+            <span className={styles.statLabel}>HR</span>
+            <span className={styles.statVal}>{debrief.avg_heart_rate} bpm</span>
+          </div>
+        )}
+      </div>
+
+      <p className={styles.latestRunPreview}>{preview}</p>
+
+      <Link href={`/dashboard/runs/${debrief.run_id}`} className={styles.latestRunLink}>
+        Read full debrief →
+      </Link>
+    </div>
+  );
+}
+
 function RunRow({ run }) {
   const rpe = run.raw_payload?.rpe;
+  const hasDebrief = run.debrief_status === "complete";
 
   return (
     <Link href={`/dashboard/runs/${run.id}`} className={styles.runRow}>
       <div className={styles.runDate}>
         <span className={styles.runDateText}>{formatDate(run.started_at)}</span>
         <span className={styles.runType}>{RUN_TYPE_LABELS[run.run_type] || run.run_type}</span>
+        {run.source === "strava" && <span className={styles.sourceTag}>Strava</span>}
       </div>
 
       <div className={styles.runStats}>
@@ -137,7 +225,7 @@ function RunRow({ run }) {
 
       <div className={styles.runViewDebrief}>
         <span className={styles.debriefDot} />
-        <span>View debrief →</span>
+        <span>{hasDebrief ? "View debrief →" : "Get debrief →"}</span>
       </div>
     </Link>
   );
