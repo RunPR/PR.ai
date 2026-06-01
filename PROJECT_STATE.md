@@ -1,6 +1,6 @@
 # PR.ai — Project State
 
-**As of:** June 1, 2026
+**As of:** May 31, 2026
 
 This document is the single source of truth for what's done, what's in progress, and what's next. Update after every significant work session.
 
@@ -9,7 +9,7 @@ This document is the single source of truth for what's done, what's in progress,
 ## Where we are
 
 **Phase 0 — Skill hardening:** ✓ Complete (closed May 21, 2026). Prompt since bumped to v4.2.
-**Phase 1 — The 11-step build:** In progress. Steps 1–8 complete. Alpha is next.
+**Phase 1 — The 11-step build:** In progress. Steps 1–8 + Step 10 complete. 8.5 prompt hardening is next, then alpha.
 
 ---
 
@@ -46,7 +46,10 @@ This document is the single source of truth for what's done, what's in progress,
 | `apps/web/app/api/stripe/webhook/route.js` | POST — handle subscription lifecycle events | Live |
 | `apps/web/app/api/stripe/portal/route.js` | POST — create Customer Portal session | Live |
 | `apps/web/app/dashboard/settings/billing-controls.jsx` | Upgrade / manage billing client component | Live |
-| `apps/web/app/dashboard/runs/[id]/debrief-stream.jsx` | Bullet list rendering in DebriefBody | Updated |
+| `apps/web/app/dashboard/runs/[id]/debrief-stream.jsx` | Bullet list rendering in DebriefBody, PROMPT_VERSION in footer | Updated |
+| `apps/web/lib/db-migrate-step10.js` | `goals` table migration | Run in prod |
+| `apps/web/app/api/goals/route.js` | GET + POST upsert for user race goal | Live |
+| `apps/web/app/dashboard/goal/` | /dashboard/goal — set/edit race goal, distance dropdown, name/date/time | Live |
 
 ---
 
@@ -68,14 +71,14 @@ This document is the single source of truth for what's done, what's in progress,
 - **Debrief caching:** Generated once, stored in `debriefs` table, served from DB on revisit.
 - **Strava runs:** Don't auto-debrief. User clicks "Get debrief →" to trigger generation.
 - **Tier branching:** `getEffectiveTier()` in `lib/stripe.js` — debrief route queries DB on every request. Trial active = paid (Sonnet). Trial expired or free = free (Haiku).
-- **Goal context:** Not wired yet (Step 10). MISSING-DATA RULE handles it gracefully.
+- **Goal context:** Wired (Step 10). `goals` table, one row per user. Debrief route queries goal + computes `weeks_until_race`. GoalBanner on dashboard — two-state card (empty prompt / set with accent highlights on goal time + distance).
 - **Context labels:** Energy/stress/sleep quality sent to AI as words (Low/Okay/Strong) not raw numbers.
 - **Technical prompt fields:** Splits, HR zones, RPE omitted from prompt entirely when absent — not "not provided".
 
 ### Test suite
 - 15 scenarios: core runs (A1–A5), edge cases (B1–B4), sensitive content (C1–C3), robustness (D1–D3).
-- Last run: May 31, 2026 — 15/15 passed. Haiku 4.5: 9/9, Sonnet 4.6: 6/6.
-- Note: free-tier word counts running 130–175 words vs 80–100 target (B-015, fix before Step 8).
+- Last run: May 31, 2026 — 15/15 passed. Haiku 4.5: 9/9, Sonnet 4.6: 6/6. No regressions after Step 10 coach-prompt changes.
+- Note: free-tier word counts running 130–175 words vs 80–100 target (B-015, fix in Step 8.5).
 
 ---
 
@@ -93,9 +96,9 @@ This document is the single source of truth for what's done, what's in progress,
 | 6.5 Prompt caching | ✅ Done | `cache_control: ephemeral` on system prompt block in debrief route; cache stats logged per request |
 | 7. Recent runs + user memory | ✅ Done | Last 5 runs in prompt, user_memories table + Haiku extraction, /dashboard/memories Coach page, back-button router cache fix |
 | 8. Paid tier + billing | ✅ Done | Stripe Checkout + webhook + customer portal, 14-day reverse trial, Haiku (free) / Sonnet (paid) branching, billing card in settings, bullet rendering fix in DebriefBody |
-| Alpha | ⬜ | After Step 8 — hand-picked runners, real feedback | **Next** |
-| 8.5 Prompt hardening | ⬜ | After alpha — broaden persona, tone calibration, goal-awareness |
-| 8.6 Test suite expansion | ⬜ | After 8.5 — new scenarios for non-elite runners, 5K/10K/HM distances, lower fitness levels, varied goals; current 15 scenarios skew elite marathon |
+| 8.5 Prompt hardening | ⬜ | Broaden persona beyond elite marathoners, tone calibration, B-015 word count fix | **Next** |
+| 8.6 Test suite expansion | ⬜ | Add scenarios for non-elite runners, 5K/10K/HM, lower fitness levels, goal-aware scenarios |
+| Alpha | ⬜ | After 8.5 + 8.6 — hand-picked runners, real feedback |
 | 9. Plan ingestion | ⬜ | |
 | 10. Goal setting + onboarding | ✅ Done | goals table (distance, name, date, goal_time), GoalBanner on dashboard, /dashboard/goal edit page, wired into debrief prompt with weeks_until_race |
 | 11. PWA polish | ⬜ | Web manifest, service worker |

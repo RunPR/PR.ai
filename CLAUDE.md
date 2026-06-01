@@ -53,6 +53,7 @@ apps/web/
 │   │   │   ├── route.js               (POST — create run)
 │   │   │   └── [id]/debrief/route.js  (POST — stream debrief)
 │   │   ├── [id]/context/route.js  (POST — save context + run_type)
+│   │   ├── goals/route.js         (GET + POST upsert — user race goal)
 │   │   └── memories/
 │   │       ├── route.js           (GET — list user memories)
 │   │       └── [id]/route.js      (DELETE — remove a memory)
@@ -105,6 +106,7 @@ apps/web/
 │   ├── db-migrate-step5.js        (strava_connections table)
 │   ├── db-migrate-step7.js        (user_memories table)
 │   ├── db-migrate-step8.js        (stripe_subscription_id on users)
+│   ├── db-migrate-step10.js       (goals table)
 │   ├── stripe.js                  (Stripe client, PRICE_ID, getEffectiveTier, trialDaysRemaining)
 │   ├── format.js                  (formatDistance, formatDuration, formatPacePerMile, etc.)
 │   ├── memory-extract.js          (Haiku extraction call — pulls durable facts from debrief)
@@ -211,9 +213,9 @@ SKILL v4.1 validated on Haiku 4.5 + Sonnet 4.6. All 15 test scenarios passed. Ba
 | 6.5 Prompt caching | ✅ Done | `cache_control: ephemeral` on system prompt block in debrief route; cache stats logged per request |
 | 7. Recent runs + user memory | ✅ Done | Last 5 runs in prompt, user_memories table, Haiku extraction after debrief, Coach page (/dashboard/memories) |
 | 8. Paid tier + billing | ✅ Done | Stripe Checkout + webhook + portal, tier branching (Haiku free / Sonnet paid), 14-day reverse trial, bullet rendering fix |
-| Alpha | ⬜ | After Step 8 — hand-picked runners, collect real feedback | **Next** |
-| 8.5 Prompt hardening | ⬜ | After alpha — broaden persona beyond elite marathoners, tone calibration, goal-awareness pre-Step 10 |
-| 8.6 Test suite expansion | ⬜ | After 8.5 — add scenarios for non-elite runners, different distances (5K/10K/HM), lower fitness levels, varied goals; current 15 scenarios skew toward experienced marathoners |
+| 8.5 Prompt hardening | ⬜ | Broaden persona beyond elite marathoners, tone calibration, B-015 word count fix | **Next** |
+| 8.6 Test suite expansion | ⬜ | Add scenarios for non-elite runners, 5K/10K/HM distances, lower fitness levels, goal-aware scenarios |
+| Alpha | ⬜ | After 8.5 + 8.6 — hand-picked runners, collect real feedback |
 | 9. Plan ingestion | ⬜ | |
 | 10. Goal setting + onboarding | ✅ Done | goals table, race distance + name + date + goal time, GoalBanner on dashboard, /dashboard/goal page, wired into debrief prompt |
 | 11. PWA polish | ⬜ | Web manifest, service worker |
