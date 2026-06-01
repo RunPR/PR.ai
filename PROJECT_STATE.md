@@ -79,7 +79,8 @@ This document is the single source of truth for what's done, what's in progress,
 | 5. Strava connection | ✅ Done | OAuth + webhook + sync live in prod |
 | 5.5 Dashboard polish | ✅ Done | Latest run card, debrief preview, source badge, smart CTA, empty state fix, latest-run date bug fix |
 | 6. Context form | ✅ Done | Context gate, labeled pills, run type picker (Strava), `/api/runs/[id]/context`, prompt v4.2 |
-| 7. Recent runs + user memory | 🔄 Next | |
+| 6.5 Prompt caching | ✅ Done | `cache_control: ephemeral` on system prompt block in debrief route; cache stats logged per request |
+| 7. Recent runs + user memory | ⬜ | |
 | 8. Paid tier + billing | ⬜ | Stripe, tier branching, reverse trial |
 | Alpha | ⬜ | After Step 8 — hand-picked runners, real feedback |
 | 8.5 Prompt hardening | ⬜ | After alpha — broaden persona, tone calibration, goal-awareness |
@@ -87,6 +88,7 @@ This document is the single source of truth for what's done, what's in progress,
 | 9. Plan ingestion | ⬜ | |
 | 10. Goal setting + onboarding | ⬜ | Goals table, race/time context in debrief |
 | 11. PWA polish | ⬜ | Web manifest, service worker |
+| 12. AI adaptive training plans | ⬜ | User brings their own plan (Pfitzinger, Higdon, custom) — AI adapts week-to-week based on run log, user memory, and goal time. Plan adaptation, not generation from scratch. |
 
 ---
 

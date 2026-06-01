@@ -187,6 +187,7 @@ SKILL v4.1 validated on Haiku 4.5 + Sonnet 4.6. All 15 test scenarios passed. Ba
 | 5. Strava connection | ✅ Done | OAuth + webhook + sync live in prod |
 | 5.5 Dashboard polish | ✅ Done | Latest run card + debrief preview, source badge, smart CTA, empty state fix, latest-run bug fix (by date not debrief date) |
 | 6. Context form | ✅ Done | Context gate with labeled pills, run type picker (Strava only), `/api/runs/[id]/context`, prompt v4.2 |
+| 6.5 Prompt caching | ✅ Done | `cache_control: ephemeral` on system prompt block in debrief route; cache stats logged per request |
 | 7. Recent runs + user memory | ⬜ | **Next** |
 | 8. Paid tier + billing | ⬜ | Stripe, tier branching in debrief route |
 | Alpha | ⬜ | After Step 8 — hand-picked runners, collect real feedback |
@@ -194,7 +195,8 @@ SKILL v4.1 validated on Haiku 4.5 + Sonnet 4.6. All 15 test scenarios passed. Ba
 | 8.6 Test suite expansion | ⬜ | After 8.5 — add scenarios for non-elite runners, different distances (5K/10K/HM), lower fitness levels, varied goals; current 15 scenarios skew toward experienced marathoners |
 | 9. Plan ingestion | ⬜ | |
 | 10. Goal setting + onboarding | ⬜ | Goals table, race/time context in debrief |
-| 11. PWA polish | ⬜ | Web manifest, service worker, last step |
+| 11. PWA polish | ⬜ | Web manifest, service worker |
+| 12. AI adaptive training plans | ⬜ | User brings their own plan (Pfitzinger, Higdon, etc.) — AI adapts it week-to-week based on run log, memory, and goal. Not generate-from-scratch. |
 
 ---
 

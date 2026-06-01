@@ -108,7 +108,13 @@ export async function POST(request, { params }) {
         const apiStream = await anthropic.messages.stream({
           model: MODEL,
           max_tokens: 1024,
-          system: systemPrompt,
+          system: [
+            {
+              type: "text",
+              text: systemPrompt,
+              cache_control: { type: "ephemeral" },
+            },
+          ],
           messages: [{ role: "user", content: userMessage }],
         });
 
@@ -118,11 +124,12 @@ export async function POST(request, { params }) {
             fullText += chunk;
             controller.enqueue(encoder.encode(chunk));
           } else if (event.type === "message_delta" && event.usage) {
-            // Final usage on message_delta
             if (event.usage.output_tokens) outputTokens = event.usage.output_tokens;
           } else if (event.type === "message_start" && event.message?.usage) {
-            inputTokens = event.message.usage.input_tokens || 0;
-            outputTokens = event.message.usage.output_tokens || 0;
+            const u = event.message.usage;
+            inputTokens = u.input_tokens || 0;
+            outputTokens = u.output_tokens || 0;
+            console.log(`[debrief] tokens — input: ${u.input_tokens}, cache_write: ${u.cache_creation_input_tokens ?? 0}, cache_read: ${u.cache_read_input_tokens ?? 0}, output: ${u.output_tokens}`);
           }
         }
       } catch (err) {
