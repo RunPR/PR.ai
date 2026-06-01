@@ -160,8 +160,9 @@ the case where the user skips the context form.
   user gets "your debrief is being prepared" immediately, then a push
   notification when it's ready (usually 5-15 seconds).
 - Step 5's three reads fire in parallel (`Promise.all`).
-- Step 7's memory extraction is fire-and-forget — the debrief is shown to
-  the user whether or not memory extraction succeeds.
+- Step 7's memory extraction is awaited (not fire-and-forget) — required to
+  survive Vercel's serverless function lifecycle. The debrief is shown to the
+  user only after extraction completes (or fails gracefully).
 
 ---
 
@@ -172,7 +173,7 @@ the case where the user skips the context form.
   /(marketing)                # Landing page, signup
   /(dashboard)                # Authenticated app
     /runs/[id]                # Run detail + debrief view
-    /memory                   # "What I Know About You" screen
+    /memories                 # "What I Know About You" screen
     /plan                     # Plan upload + view
     /settings                 # Account, billing
 
@@ -217,19 +218,18 @@ the case where the user skips the context form.
 ## Deployment topology
 
 **MVP (single-region, single-instance):**
-- Vercel hosts the Next.js app (frontend + API routes)
-- Railway or Render hosts:
-  - PostgreSQL primary
-  - Background worker (for jobs)
-- Stripe and Strava webhooks point at Vercel API routes
-- Anthropic calls happen from Vercel (low latency, no egress concerns)
+- Vercel hosts both Next.js apps (frontend + API routes + webhooks)
+- Neon Postgres (`@vercel/postgres`) — serverless Postgres, no separate DB host needed
+- Strava and Stripe webhooks point at Vercel API routes
+- Anthropic calls happen from Vercel serverless functions (low latency, no egress concerns)
+- No separate background worker — memory extraction runs inline in the debrief API route
 
 **Cost estimate at MVP scale (100 users, 3 debriefs/user/week):**
 - Vercel: free tier sufficient
-- Railway: ~$10-20/month (Postgres + worker)
+- Neon: free tier sufficient at MVP scale
 - Anthropic API: ~$30-100/month (depends on tier mix; assume $1-3 per paid user per month)
 - Stripe: % of revenue, no flat cost
-- **Total infra cost: ~$50-150/month at 100 users**
+- **Total infra cost: ~$30-100/month at 100 users (lower than original estimate — no DB host)**
 
 This is the right scale to test the freemium economics. At $14.99/mo with 10%
 paid conversion, 100 users = 10 paying × $14.99 = $150/mo revenue, roughly

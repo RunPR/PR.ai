@@ -77,6 +77,28 @@ CORE RULES:
 - Tone: smart friend who happens to be a coach. Not a chatbot. Not a cheerleader.
   Never ego-strokey. Honesty over encouragement.
 
+COACHING PHILOSOPHY — DEFAULT POSTURE IS TRAINING FORWARD:
+- Serious marathon runners run most days. An easy day is easy running — not rest.
+  Recovery runs deliver blood flow and nutrients to damaged muscle faster than
+  complete rest. For a trained athlete, they are the primary recovery tool.
+- 80% of all training should be genuinely easy — conversational pace, controlled HR.
+  This is how aerobic bases are built and time barriers are broken. Running easy days
+  too fast is the single most common training mistake.
+- The default recommendation after any completed run is to keep training. Consistency
+  compounds — being consistently good beats being occasionally great. Never prescribe
+  rest as a default outcome.
+- Elevated HR on an easy run is a pacing signal — the athlete went out too fast,
+  conditions were hot, or there is mild residual fatigue. Correct the effort guidance.
+  Do NOT recommend rest.
+- Rest or reduced load is only warranted when a GENUINE SIGNAL is present:
+  * Injury or physical discomfort mentioned in the athlete's notes — always overrides
+  * Back-to-back hard sessions (tempo, intervals, long run) within 48 hours with
+    elevated HR — hard efforts require 48-72 hours between them
+  * Resting HR elevated for 3+ consecutive days, or soreness persisting past 72 hours
+  * Sleep under 5 hours AND high stress AND a hard effort — all three together
+- After any normal run, move the athlete forward: what to focus on next, at what
+  effort, and why it serves the goal. That is the job.
+
 MISSING-DATA RULE:
 - If sleep, energy, or stress fields are "not provided", do NOT guess at how the
   athlete felt. Acknowledge the gap as a teaching moment — show the athlete what
@@ -127,7 +149,11 @@ If tier is "free":
 - Produce one section only: THE DEBRIEF.
 - Aim for 80-100 words. Shorter is fine if the run doesn't need more.
 - Today's run only. Do not analyze patterns across recent runs even if provided.
-- End with ONE generic recovery action for the next 24 hours.
+- End with ONE motivating, directional statement — not a specific training prescription.
+  Keep it general: reinforce the habit, connect the effort to the goal, or correct one
+  thing to focus on next time. Only recommend rest if a genuine signal is present
+  (injury notes, or sleep under 5h + high stress + hard effort combined). For a normal
+  run, point forward.
 
 If tier is "paid":
 - Produce two sections in this order:
@@ -174,10 +200,17 @@ Splits: {{splits}}
 Perceived effort: {{rpe}}/10
 
 --- MY CONTEXT ---
-Sleep last night: {{sleep_hours}} hours, quality: {{sleep_quality}}/5
-Energy before run: {{energy}}/5
-Stress level today: {{stress}}/5
+Sleep last night: {{sleep_hours}} hours, quality: {{sleep_quality_label}}
+Energy before run: {{energy_label}}
+Stress level today: {{stress_label}}
 Notes: {{free_text}}
+
+--- MY GOAL ---
+Race distance: {{race_distance}}
+Target race: {{race_name}}
+Race date: {{race_date}}
+Goal finish time: {{goal_time}}
+Weeks until race: {{weeks_until_race}}
 
 --- RECENT RUNS (last 5) ---
 {{recent_runs}}
@@ -187,32 +220,29 @@ Notes: {{free_text}}
 
 --- TRAINING PLAN (paid tier only) ---
 {{training_plan_excerpt}}
-
---- MY GOAL ---
-Target race: {{race_name}}
-Race date: {{race_date}}
-Goal finish time: {{goal_time}}
-Current training week: {{week_number}} of {{total_weeks}}
 ```
 
 ### Field reference
 
 | Field | Type | Notes |
 |---|---|---|
-| `run_type` | string | Easy, Tempo, Long run, Intervals, Race |
-| `hr_zones` | string | e.g. `Z1: 10%, Z2: 55%, Z3: 35%` |
-| `splits` | string | e.g. `mi1: 9:10, mi2: 9:05, mi3: 9:22` |
-| `rpe` | int 1–10 | 1 = easy, 10 = max |
+| `run_type` | string | Easy, Tempo, Long run, Intervals, Race, Recovery, Marathon pace |
+| `hr_zones` | string | e.g. `Z1: 10%, Z2: 55%, Z3: 35%` — omitted from prompt when absent |
+| `splits` | string | e.g. `mi1: 9:10, mi2: 9:05, mi3: 9:22` — omitted from prompt when absent |
+| `rpe` | int 1–10 | 1 = easy, 10 = max — omitted from prompt when absent |
 | `sleep_hours` | float or "not provided" | Hours of sleep |
-| `sleep_quality` | int 1–5 or "not provided" | 1 = terrible, 5 = great |
-| `energy` | int 1–5 or "not provided" | Energy level before the run |
-| `stress` | int 1–5 or "not provided" | Life/work stress |
+| `sleep_quality_label` | string | Formatted as "Poor" / "Okay" / "Great" (not a raw number) |
+| `energy_label` | string | Formatted as "Low" / "Okay" / "Strong" |
+| `stress_label` | string | Formatted as "Low" / "Some" / "High" |
 | `free_text` | string | Optional notes. "not provided" if empty. |
-| `recent_runs` | string | Last 5 runs as one per line. "no recent runs logged" if empty. |
-| `user_memory` | string | Durable facts from past conversations. "no memory yet" for new users. |
+| `race_distance` | string | e.g. "Marathon", "Half Marathon", "5K". "not provided" if not set. |
+| `race_name` | string | e.g. "Boston Marathon". "not provided" if not set. |
+| `race_date` | string | ISO date. "not provided" if not set. |
+| `goal_time` | string | e.g. "3:59:59". "not provided" if not set. |
+| `weeks_until_race` | int | Computed from run date vs race date. "not provided" if no race date. |
+| `recent_runs` | string | Last 5 runs as one per line. "No recent runs on file." if empty. |
+| `user_memory` | string | Durable key/value facts from past debriefs. "No memory on file yet." for new users. |
 | `training_plan_excerpt` | string | Current week + next 2 weeks of the user's plan. Paid tier only. "no plan loaded" if not set. |
-| `week_number` | int | Current week of training plan |
-| `total_weeks` | int | Total weeks in plan |
 
 ### User memory format
 
@@ -279,7 +309,7 @@ const response = await fetch("https://api.anthropic.com/v1/messages", {
   method: "POST",
   headers: { "Content-Type": "application/json" },
   body: JSON.stringify({
-    model: "claude-sonnet-4-20250514",
+    model: "claude-sonnet-4-6",  // paid tier; free tier uses "claude-haiku-4-5-20251001"
     max_tokens: 1000,
     system: systemPrompt,
     messages: [{ role: "user", content: userMessage }]
@@ -312,9 +342,10 @@ const debrief = data.content[0].text;
 
 Key future features:
 - B-001: Weekly Sunday summary
-- B-002: Haiku for free, Sonnet for paid
 - B-003: Wearable integration (v2 paid hook)
 - B-007: Workout sync to watch — critical post-MVP feature
 - B-008: Proactive Check-Ins (coach initiates)
 - B-009: Hard-gate weekly check-in (Type to Run mechanic)
 - B-010: Conversational follow-up (Whoop Coach-style)
+
+Shipped: B-002 (Haiku free / Sonnet paid — live since Step 8)

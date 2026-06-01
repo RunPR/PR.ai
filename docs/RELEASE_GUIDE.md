@@ -32,15 +32,15 @@ the other two.
 3. **Presentation layer** — Next.js pages, API routes, push notifications,
    billing UI.
 
-Service modules in the backend:
-- `/services/coaching` — the skill prompt and Anthropic calls
-- `/services/strava` — OAuth, webhook handling, run fetching
-- `/services/memory` — read/write/extract user memory
-- `/services/plan` — plan ingestion, parsing, excerpt-generation
-- `/services/billing` — Stripe wrapper
-- `/api/...` — Next.js API routes that orchestrate the above
+Service modules in the backend (current implementation uses `apps/web/lib/`):
+- `lib/coach-prompt.js` — the skill prompt, buildUserMessage, buildSystemPrompt
+- `lib/strava.js` — OAuth, token refresh, activity mapping
+- `lib/memory-extract.js` — post-debrief Haiku extraction call
+- `lib/stripe.js` — Stripe client, getEffectiveTier, trialDaysRemaining
+- `lib/auth.js` — NextAuth options
+- `app/api/...` — Next.js API routes that orchestrate the above
 
-See `ARCHITECTURE_DIAGRAM.md` for the visual.
+See `ARCHITECTURE.md` for the visual.
 
 ---
 
@@ -100,37 +100,36 @@ next. No exceptions.
 - B-016 fixed: `inferRunType()` uses name signals + 16km distance threshold only (pace heuristic removed)
 - Prompt v4.2: COACHING PHILOSOPHY, training-forward posture, context labels as words
 
-### Step 7 — Recent runs + user memory 🔄 Next
-- Last 5 runs passed to coaching service as `--- RECENT RUNS ---` section
-- `user_memories` table + LLM extraction prompt after each debrief
-- "What I Know About You" screen — view, edit, delete
-- Manually moderate memory writes for the first 20 users
-- **Weekends: 2**
+### Step 7 — Recent runs + user memory ✅ Done
+- Last 5 runs injected as `--- RECENT RUNS ---` (date, type, distance, pace, HR)
+- `user_memories` table + Haiku extraction after each debrief (awaited, not fire-and-forget)
+- Temporal filter on both: only runs/memories before the current run's date
+- "What I Know About You" screen at `/dashboard/memories` — view, delete
 
-### Step 8 — Paid tier + reverse trial
-- Tier branching in coaching service (WEEK AHEAD block)
-- Stripe Checkout integration
-- 14-day reverse trial logic (`users.tier = 'trial'` → 'free' on day 15)
-- Email + push at day 13, 14, 15
-- Faded WEEK AHEAD ghost UI on free tier (S-010 paywall moment)
-- **Validates: monetization works**
-- **Weekends: 2**
+### Step 8 — Paid tier + billing ✅ Done
+- Tier branching: Haiku 4.5 (free/trial-expired) vs Sonnet 4.6 (paid/trial-active)
+- Stripe Checkout, webhook lifecycle, Customer Portal
+- 14-day reverse trial (`users.tier = 'trial'` → 'free' on day 15 via `getEffectiveTier()`)
+- Billing card in settings, bullet rendering fix in DebriefBody
+- Prompt caching (`cache_control: ephemeral` on system prompt block)
 
-### Alpha — Hand-picked user testing (after Step 8)
+### Step 8.5 — Prompt hardening ⬜ Next
+- Broaden persona beyond elite marathon runners — any runner with a goal
+- Tone calibration for different fitness levels
+- Fix B-015: free-tier word count (130–175 words vs 80–100 target)
+- Run full test suite after every prompt change
+
+### Step 8.6 — Test suite expansion ⬜
+- Add scenarios for non-elite runners, 5K/10K/HM distances, lower fitness levels
+- Goal-aware scenarios now that Step 10 is wired
+
+### Alpha — Hand-picked user testing (after 8.5 + 8.6) ⬜
 - 5–10 runners Arturo knows personally, mix of Strava + manual users
 - Full paid-tier access for all alpha users (no Stripe gate)
 - Personal onboarding call per user
 - Weekly check-in: what did the debriefs get right? Wrong? What's missing?
-- Track all feedback, look for patterns
-- **Exit criteria:** Clear top 3 issues to fix before Step 8.5
+- **Exit criteria:** 60%+ Sean Ellis "very disappointed"; clear top 3 issues
 - **Duration: 2–4 weeks**
-
-### Step 8.5 — Prompt hardening (after alpha)
-- Broaden persona beyond elite marathon runners — any runner with a goal
-- Tone calibration for different fitness levels (beginner vs. competitive)
-- Goal-awareness improvements before Step 10 wires the goals table
-- Fix real issues surfaced during alpha — not assumptions
-- Run full test suite after every prompt change
 
 ### Step 9 — Plan ingestion
 - "Paste your training plan" textarea
@@ -139,11 +138,12 @@ next. No exceptions.
 - `plan_adaptations` table records when WEEK AHEAD changes the plan
 - **Weekends: 1-2**
 
-### Step 10 — Goal setting + onboarding polish
-- First-run flow: target race → race date → goal time → upload plan?
-- Demo debrief on signup page using fake data
-- Clean transition between screens
-- **Weekend: 1**
+### Step 10 — Goal setting ✅ Done
+- `goals` table (race_distance, race_name, race_date, goal_time) — one per user, upserted
+- `/dashboard/goal` — set/edit race goal with distance dropdown
+- GoalBanner on dashboard — two-state card (empty prompt / set with accent highlights)
+- Goal + `weeks_until_race` wired into every debrief prompt
+- Note: first-run onboarding gate (auto-surface goal form on signup) is still pending (B-006)
 
 ### Step 11 — PWA polish + ready for users
 - Web app manifest, service worker, app icon
@@ -292,8 +292,8 @@ ask OR when churn data points to "I forget to do the adjusted workouts."
 2. **Whoop, Strava, or Garmin shipping a similar feature.** All three are
    moving here. Speed to a defensible user base matters.
 3. **LLM cost spiraling.** Track per-user API spend from day 1. If a paid
-   user costs >$3/month in API, the math breaks at $14.99/mo. Move to Haiku
-   for free tier (B-002) at first sign of trouble.
+   user costs >$3/month in API, the math breaks at $14.99/mo. Haiku is already
+   used for free tier (B-002 — shipped Step 8); Sonnet only for paid/trial.
 4. **Skill regressing as features are added.** Run the test suite on every
    prompt change. Non-negotiable.
 5. **Burnout.** Solo build on nights/weekends. Discipline of NOT building

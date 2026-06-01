@@ -38,6 +38,7 @@ The core identity record.
 | `trial_started_at` | timestamptz | Set on signup. Used to compute day 15. |
 | `trial_ended_at` | timestamptz, nullable | When user converted or dropped to free. |
 | `stripe_customer_id` | text, nullable | Set on first payment attempt. |
+| `stripe_subscription_id` | text, nullable | Set on `checkout.session.completed` webhook. |
 | `created_at` | timestamptz, not null | |
 | `updated_at` | timestamptz, not null | |
 | `deleted_at` | timestamptz, nullable | Soft delete. |
@@ -48,25 +49,22 @@ The core identity record.
 
 ### `goals`
 
-A user's target race. One active goal per user at a time, but historical goals
-are preserved so the coach can reference past races in user memory ("you PR'd
-Chicago 2025").
+A user's target race. One goal per user — upserted on every save via a unique
+index on `user_id`. No historical goals kept in this table; past race context
+lives in `user_memories` instead.
 
 | Column | Type | Notes |
 |---|---|---|
-| `id` | uuid (PK) | |
-| `user_id` | uuid (FK → users.id) | |
-| `race_name` | text | "Berlin Marathon" |
-| `race_date` | date | |
-| `goal_time` | interval | Postgres native interval type. e.g. '3:30:00'. |
-| `total_weeks` | int | Length of the training plan. |
-| `started_at` | date | When training officially started. |
-| `status` | enum('active', 'completed', 'abandoned') | |
-| `actual_finish_time` | interval, nullable | Filled in after race day. |
-| `created_at` | timestamptz | |
-| `updated_at` | timestamptz | |
+| `id` | serial (PK) | Auto-incrementing integer. |
+| `user_id` | uuid (FK → users.id, NOT NULL) | |
+| `race_name` | text | "Berlin Marathon" — optional. |
+| `race_distance` | text | "Marathon", "Half Marathon", "5K", etc. Required for meaningful coaching. |
+| `race_date` | date | Optional — used to compute weeks_until_race in the prompt. |
+| `goal_time` | text | e.g. "3:59:59" — stored as plain text, not a Postgres interval. |
+| `created_at` | timestamptz | DEFAULT now() |
+| `updated_at` | timestamptz | DEFAULT now() |
 
-**Indexes:** `user_id`, `status` (for finding active goal per user).
+**Indexes:** `goals_user_id_idx` (UNIQUE) — enforces one goal per user, enables fast upsert.
 
 ---
 
@@ -150,55 +148,60 @@ data source might differ from the run source.
 ### `debriefs`
 
 The generated coaching output. Stored so users can scroll back through history
-and so we can analyze what's been generated for analytics + retraining
-considerations later.
+and so we can analyze what's been generated for cost tracking and prompt regression
+analysis.
 
 | Column | Type | Notes |
 |---|---|---|
 | `id` | uuid (PK) | |
-| `run_id` | uuid (FK → runs.id) | |
+| `run_id` | uuid (FK → runs.id, UNIQUE) | One debrief per run. Cached — never re-generated on page revisit. |
 | `user_id` | uuid (FK → users.id) | Denormalized. |
-| `tier_at_generation` | enum('free', 'paid') | What tier the user was on when generated. |
-| `debrief_text` | text, not null | The "THE DEBRIEF" section. |
-| `week_ahead_text` | text, nullable | "THE WEEK AHEAD" section. Null for free tier. |
-| `model_used` | text | e.g. "claude-sonnet-4-20250514". For cost analysis. |
-| `prompt_version` | text | Tagged version of the skill prompt used. For A/B and regression analysis. |
+| `tier_at_generation` | text CHECK ('trial', 'free', 'paid') | What tier the user was on when generated. |
+| `prompt_version` | text, not null | e.g. "v4.2". For regression tracking. |
+| `model` | text, not null | e.g. "claude-haiku-4-5-20251001". For cost analysis. |
+| `content` | text, not null | Full debrief output — includes both THE DEBRIEF and THE WEEK AHEAD (paid) in one block. |
 | `input_tokens` | int | For cost tracking. |
 | `output_tokens` | int | |
-| `cost_usd` | numeric(10,6), computed | Generated column from tokens × model price. |
-| `user_feedback` | enum('helpful', 'unhelpful', 'wrong'), nullable | Thumbs up/down/flag. |
-| `feedback_notes` | text, nullable | If user expanded on feedback. |
+| `status` | text | CHECK ('generating', 'complete', 'failed'). DEFAULT 'complete'. |
+| `error_message` | text, nullable | Set when status = 'failed'. |
 | `created_at` | timestamptz | |
+| `updated_at` | timestamptz | |
 
-**Indexes:** `user_id` + `created_at` desc (history view), `prompt_version` + `user_feedback` (for evaluating prompt changes), `model_used` + `created_at` (for cost dashboards).
+**Indexes:** `debriefs_user_idx` on (`user_id`, `created_at` DESC), `debriefs_run_idx` on (`run_id`).
 
 ---
 
 ### `user_memories`
 
-The S-009 persistent memory store. Each row is one fact the coach has learned
-about the user. User can view, edit, delete entries.
+The S-009 persistent memory store. Each row is one key/value fact the coach has
+extracted from a debrief. User can view and delete entries at `/dashboard/memories`.
+Injected into the debrief prompt as `--- USER MEMORY ---` with temporal filtering
+(only memories created before the run's `started_at` are included).
 
 | Column | Type | Notes |
 |---|---|---|
-| `id` | uuid (PK) | |
-| `user_id` | uuid (FK → users.id) | |
-| `memory_text` | text, not null | The fact itself. e.g. "Works night shifts Tuesdays." |
-| `source` | enum('user_added', 'extracted_from_debrief', 'onboarding') | Where it came from. |
-| `source_debrief_id` | uuid (FK → debriefs.id), nullable | If extracted, which debrief. |
-| `category` | enum('training_history', 'injury', 'life_pattern', 'preference', 'race_history', 'other'), nullable | For filtering in the UI. |
-| `is_active` | boolean, default true | User can disable without deleting. |
-| `created_at` | timestamptz | |
-| `updated_at` | timestamptz | |
-| `deleted_at` | timestamptz, nullable | |
+| `id` | uuid (PK) | DEFAULT gen_random_uuid() |
+| `user_id` | uuid (FK → users.id, NOT NULL) | ON DELETE CASCADE |
+| `key` | text, not null | Category label. e.g. "injury_history", "life_pattern". Used for DISTINCT ON deduplication. |
+| `value` | text, not null | The fact itself. e.g. "Hamstrings flare up above 45mi/week." |
+| `source` | text, not null | DEFAULT 'extraction'. Where it came from. |
+| `run_id` | uuid (FK → runs.id), nullable | Which run triggered the extraction. ON DELETE SET NULL. |
+| `created_at` | timestamptz, not null | DEFAULT now() |
+| `updated_at` | timestamptz, not null | DEFAULT now() |
 
-**Indexes:** `user_id` + `is_active` (the main query: "give me everything active for this user").
+**Indexes:** `user_memories_user_idx` on (`user_id`), `user_memories_run_idx` on (`run_id`).
 
-**Important for safety:** When building the extraction prompt, exclude sensitive
-categories explicitly — no weight, no medications, no diagnoses beyond
-already-stated injuries. The category enum lets us audit what's getting saved.
+**Deduplication:** Injection query uses `DISTINCT ON (key) ORDER BY key, created_at DESC` — one entry per key type, newest wins. All rows remain visible to the user for review/deletion.
+
+**Safety:** Extraction prompt explicitly excludes weight, medications, and clinical diagnoses. Training context only.
 
 ---
+
+---
+
+## Planned tables (not yet implemented)
+
+The tables below are designed and ready to build. They are not in the database yet. Each maps to a specific step in Phase 1.
 
 ### `training_plans`
 

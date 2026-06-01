@@ -28,60 +28,9 @@ A running track of all suggestions made for the product. Each entry has a status
 
 ## Active (IN MVP)
 
-### S-001 — Add recent runs context to user message
-- **Date:** 2026-05-15
-- **What:** Add a `--- RECENT RUNS ---` section with last 3-5 runs (date, type, distance, pace, RPE, one-line summary) to every debrief call.
-- **Why:** Biggest perceived-intelligence upgrade. Without it, the coach can't see patterns. Required infrastructure for S-004.
-
-### S-002 — Missing-context guardrail (superseded by S-006)
-- **Date:** 2026-05-15
-- **Status note:** Kept in MVP, upgraded by S-006.
-
-### S-003 — Tier-aware prompt branching (revised)
-- **Date:** 2026-05-15
-- **Revised framing:** Free = **reaction** (what just happened). Paid = **reaction + direction** (what just happened AND what to do next).
-- **What:** Branch system prompt on `{{tier}}`. Free = debrief only. Paid = debrief + WEEK AHEAD block (S-004).
-
-### S-004 — Forward-looking adjustment block (paid tier only)
-- **Date:** 2026-05-15
-- **What:** Paid-tier debriefs include `THE WEEK AHEAD` — concrete adjustments to the next 3-7 days based on today's run and recent log.
-- **Why:** This is the moat. Plan adaptation tied to a goal is what Strava AI structurally can't do and what Garmin doesn't do for marathon runners.
-
-### S-005 — Minimal context form (MVP constraint)
-- **Date:** 2026-05-15
-- **What:** MVP context form is three inputs only: sleep, energy, stress. Optional notes. Under 15 seconds to complete.
-
-### S-006 — Guardrail-as-teaching-moment when context is missing
-- **Date:** 2026-05-15
-- **What:** Missing context fields trigger a value-of-logging teaching moment, not a defensive acknowledgment.
-
-### S-011 — Length philosophy: impact over compression
-- **Date:** 2026-05-15
-- **What:** Reframe the WEEK AHEAD word target from a hard ~80-word ceiling to a guideline that flexes up to ~120 words when the situation genuinely demands multi-day planning (injury, post-race, ultra recovery, diagnostic protocols). Free tier loosened to "aim for 80-100, shorter is fine." Same impact-over-compression principle applies throughout.
-- **Why:** Test suite run revealed 2 of 15 scenarios (B2 ultra, B4 race PR) produced 35-41% over-budget WEEK AHEAD outputs because the content was substantive, not padded. A hard limit would have forced cutting useful guidance. The rule should be about value-per-word, not arithmetic.
-- **Status:** Applied to SKILL v4 (now v4.1).
-- **Cost:** Zero. Prompt-only refinement.
-
-### S-007 — Position against the competitive map explicitly
-- **Date:** 2026-05-15
-- **What:** Update product positioning, marketing copy, onboarding, and prompt tone to reflect the competitive map above. Be the layer of intelligence on top of the user's existing stack (Strava + watch + optional plan). Tone: direct, specific, never ego-strokey. Explicitly differentiate from Strava AI ("we know your goal"), Garmin ("we serve marathon runners"), Runna ("we adapt YOUR plan, we don't replace it"), and Whoop ("no hardware lock-in").
-- **Why:** Without sharp positioning, we look like one more AI running app. Each competitor has a structural gap we can name.
-- **Cost:** Mostly marketing/copy. Minor prompt refinement to keep the tone honest and direct.
-
-### S-008 — Reverse trial instead of pure freemium
-- **Date:** 2026-05-15
-- **What:** New users get 14 days of full paid-tier access (debrief + WEEK AHEAD). At day 15 they drop to free tier — debriefs continue but WEEK AHEAD disappears. The loss of the forward-looking block is the upgrade trigger.
-- **Why:** Pure freemium has a structural conversion problem — a good free debrief gives 80% of value and users never upgrade. Reverse trial flips this: users have already internalized WEEK AHEAD as part of their routine. Losing it creates real upgrade motivation. Industry research shows reverse trials are one of the most reliable freemium-conversion unsticking tools.
-- **Cost:** Subscription/billing flag plus a clean day-15 transition UX.
-
-### S-009 — Persistent user memory ("My Memory" equivalent)
-- **Date:** 2026-05-15
-- **What:** Every user has a persistent memory store that the coach reads on every call. Captures: training history, injury history, life patterns (e.g. "works night shifts Tuesdays," "races better in cool weather," "hates intervals on Mondays"), stated preferences, past goal races and outcomes. User can view, edit, and delete entries via a "What I Know About You" screen.
-- **Why:** Whoop just launched this. It solves the stateless-AI problem AND creates real lock-in — a user who has trained the coach on themselves for 6 months won't switch easily. This was originally a B-007 ("nice to have") but Whoop launching it moves it to MVP table stakes for the AI-coaching category we're in.
-- **Cost:** New data model, summarization pipeline to extract memorable facts from conversations, UI screen to manage them. Non-trivial but high-leverage.
-
 ### S-010 — Bring-your-own-plan, we adapt it
 - **Date:** 2026-05-15
+- **Step:** 9 (plan ingestion)
 - **What:** Paid tier supports plan ingestion. User uploads a Higdon, Pfitzinger, or custom training plan PDF/text/image. The coach uses it as the skeleton and adapts week-by-week based on what's actually happening. WEEK AHEAD block now explicitly references the plan ("Your Higdon plan calls for 8mi tempo Thursday — given today, we're moving it to Saturday and dropping volume by 15%").
 - **Why:** Sidesteps the hardest part of building a coaching app (designing plans from scratch) while delivering the most valuable part (adapting them). Avoids competing with Runna head-on. Uses Claude's strengths (reading and reasoning over documents). Type to Run is already doing this — it works.
 - **Cost:** Plan parsing + persistent plan-state in user record. Manageable for MVP if scoped to "paste plan as text" first.
@@ -95,12 +44,6 @@ A running track of all suggestions made for the product. Each entry has a status
 - **What:** Sunday recap using the same skill pattern with a week's worth of runs as input. Pattern analysis, total load, week-ahead suggestion at meso level.
 - **Why deferred:** S-004 (forward-looking adjustment) covers the daily-level need. Weekly meso view is the second layer.
 - **Trigger to revisit:** After first 100 paying users OR if D7 retention drops below target.
-
-### B-002 — Haiku for free tier, Sonnet for paid
-- **Date:** 2026-05-15
-- **What:** A/B test Haiku for free-tier debriefs, reserve Sonnet for paid tier (which now has harder reasoning: plan adaptation, memory integration).
-- **Why deferred:** Optimize cost when usage proves the funnel.
-- **Trigger to revisit:** When free-tier API spend exceeds $200/month.
 
 ### B-003 — Wearable integration (Garmin / Whoop / Oura / Apple Health) — v2 paid hook
 - **Date:** 2026-05-15 (revised)
@@ -117,10 +60,11 @@ A running track of all suggestions made for the product. Each entry has a status
 - **What:** Expanded `--- RECENT TRAINING ---` block with weekly mileage and 7-day summary.
 - **Why deferred:** S-001 + S-010 cover most of this need at MVP.
 
-### B-006 — Onboarding goal-setting flow
+### B-006 — First-run onboarding goal-setting flow
 - **Date:** 2026-05-15
-- **What:** First-run experience captures target race, date, goal time. Becomes the upsell hook.
-- **Trigger to revisit:** When app UI work starts. **Note:** Ties directly to S-004 — WEEK AHEAD is what you unlock by setting a goal.
+- **What:** First-login experience that captures target race, date, goal time, and distance before the user reaches the dashboard. Goal page at `/dashboard/goal` is live (Step 10) — what's missing is an onboarding gate that surfaces it automatically on first login, before a user has logged any runs.
+- **Why deferred:** Goal-setting UI is functional. The onboarding redirect/gate is a polish step for alpha.
+- **Trigger to revisit:** Before alpha. Ties directly to S-004 — WEEK AHEAD is what you unlock by setting a goal.
 
 ### B-007 — Workout sync to watch (Garmin / Apple Watch / Coros)
 - **Date:** 2026-05-15
@@ -153,27 +97,12 @@ A running track of all suggestions made for the product. Each entry has a status
 - **Trigger to revisit:** Before public beta (Phase 3), OR when any prompt change causes a race-day regression in the test suite.
 - **Cost:** Prompt-only change. ~10 lines.
 
-### B-014 — Latest debrief card on dashboard (✅ shipped — Step 5.5)
-- **Date:** 2026-05-31
-- **What:** A card at the top of the dashboard showing the most recent debrief in full — above the runs list. Subtitle shows the run date, distance, and type. Small link to the full run page. Runs list stays below as the history log.
-- **Why:** The debrief is the product. Currently a user has to click into a run to see it — that buries the core value. Opening the app and having the coach already talking to you is the right first impression.
-- **Priority:** Build immediately after Step 5 prod deployment, before Step 6 (context form).
-- **Cost:** One extra query on the dashboard page (`SELECT * FROM debriefs WHERE user_id = ... ORDER BY created_at DESC LIMIT 1`), a new card component, no schema changes.
-
-### B-016 — Run type defaulting to "easy" — two root causes
-- **Date:** 2026-05-31
-- **What:** Most runs (both manual and Strava) show as "Easy run" regardless of what they were.
-- **Root cause 1 (manual):** The log-a-run form defaults the Type dropdown to "easy". Users don't change it. Fix: either default to a neutral "Select type…" placeholder (require selection) or reorder the dropdown so the most common choices are prominent.
-- **Root cause 2 (Strava):** `inferRunType()` in `lib/strava.js` falls back to `"easy"` for any activity under 16km without a `workout_type` tag set in Strava. Most users never tag workout types. Fix: widen the heuristic — e.g. use pace relative to goal MP to guess tempo/MP run, use distance bands more aggressively, or map Strava's `sport_type` field more carefully.
-- **Trigger to revisit:** Before Step 7 (recent runs context), since run type feeds into the coaching prompt's pattern analysis.
-- **Cost:** Form change is trivial. Strava heuristic improvement is a few lines in `lib/strava.js`.
-
-### B-015 — Tighten free-tier word count compliance
-- **Date:** 2026-05-31
-- **What:** Free-tier debriefs are consistently running 130-175 words against an 80-100 word target. Prompt tune needed — likely strengthen the word limit instruction or add an explicit hard cap.
-- **Why deferred:** Scenarios pass behaviorally. This becomes a real issue at Step 8 when free vs paid distinction drives billing.
-- **Trigger to revisit:** Before Step 8 (paid tier + billing). Run test suite after any prompt change to confirm it doesn't break other scenarios.
-- **Cost:** Prompt-only change, re-run full test suite to validate.
+### B-012 — Expand test suite injury coverage
+- **Date:** 2026-05-15 (surfaced during Phase 0 test suite run)
+- **What:** Add 3-4 injury scenarios to the test suite covering different body parts: knee pain mid-run, lower back stiffness, hamstring twinge, shin pain. Confirms the INJURY RULE fires across the full surface area, not just achilles (which is what C1 tested).
+- **Why deferred:** C1 validated the rule works for one body part. The rule is written generically so it should hold, but unverified. Low priority unless we see a real failure.
+- **Trigger to revisit:** Before public beta (Phase 3), OR when a user reports an injury-handling failure in alpha.
+- **Cost:** Test-suite expansion only. No prompt changes expected.
 
 ### B-013 — Dashboard summary row (weekly mileage, avg pace, streak)
 - **Date:** 2026-05-31
@@ -182,12 +111,18 @@ A running track of all suggestions made for the product. Each entry has a status
 - **Trigger to revisit:** After Step 8 (paid tier) ships. This is a good thing to have polished before showing the app to paying users.
 - **Cost:** One DB query + a summary component. Low lift.
 
-### B-012 — Expand test suite injury coverage
-- **Date:** 2026-05-15 (surfaced during Phase 0 test suite run)
-- **What:** Add 3-4 injury scenarios to the test suite covering different body parts: knee pain mid-run, lower back stiffness, hamstring twinge, shin pain. Confirms the INJURY RULE fires across the full surface area, not just achilles (which is what C1 tested).
-- **Why deferred:** C1 validated the rule works for one body part. The rule is written generically so it should hold, but unverified. Low priority unless we see a real failure.
-- **Trigger to revisit:** Before public beta (Phase 3), OR when a user reports an injury-handling failure in alpha.
-- **Cost:** Test-suite expansion only. No prompt changes expected.
+### B-015 — Tighten free-tier word count compliance
+- **Date:** 2026-05-31
+- **What:** Free-tier debriefs are consistently running 130-175 words against an 80-100 word target. Prompt tune needed — likely strengthen the word limit instruction or add an explicit hard cap.
+- **Why deferred:** Scenarios pass behaviorally. Real issue now that free vs paid distinction drives billing.
+- **Trigger to revisit:** Step 8.5 (prompt hardening — next step).
+- **Cost:** Prompt-only change, re-run full test suite to validate.
+
+### B-017 — invoice.payment_failed unhandled
+- **Date:** 2026-05-31
+- **What:** Renewal payment failures are silently ignored. Need to handle before real users — downgrade tier or send notification email.
+- **Why deferred:** No real users yet. Must fix before alpha.
+- **Trigger to revisit:** Before going live with Stripe production keys.
 
 ---
 
@@ -199,4 +134,54 @@ A running track of all suggestions made for the product. Each entry has a status
 
 ## Shipped
 
-*Pending validation of S-001 through S-010 in test runs.*
+### S-001 — Recent runs context in user message
+- **Shipped:** Step 7
+- **What:** Last 5 runs (date, type, distance, pace, HR) injected as `--- RECENT RUNS ---` in every debrief call. Temporal fix applied — only runs before the current run's date are included.
+
+### S-002 — Missing-context guardrail (superseded by S-006)
+- **Shipped:** Step 6 (via S-006)
+- **What:** Missing context fields handled gracefully. Upgraded to teaching-moment approach in S-006.
+
+### S-003 — Tier-aware prompt branching
+- **Shipped:** Step 8
+- **What:** `{{tier}}` injected into system prompt at request time. Free = Haiku 4.5, debrief only. Paid/trial = Sonnet 4.6, debrief + WEEK AHEAD. `getEffectiveTier()` in `lib/stripe.js` handles trial logic.
+
+### S-004 — Forward-looking adjustment block (paid tier)
+- **Shipped:** Step 8
+- **What:** THE WEEK AHEAD section in paid-tier debriefs. Concrete adjustments to the next 3-7 days based on today's run and recent log.
+
+### S-005 — Minimal context form
+- **Shipped:** Step 6
+- **What:** Sleep, energy, stress + optional notes. Context gate at `/dashboard/runs/[id]` before debrief generation.
+
+### S-006 — Guardrail-as-teaching-moment
+- **Shipped:** Step 6 / prompt v4.2
+- **What:** Missing context fields trigger a value-of-logging note, not a defensive acknowledgment.
+
+### S-007 — Competitive positioning baked into prompt tone
+- **Shipped:** Prompt v4.2
+- **What:** Tone is direct, specific, never ego-strokey. Prompt is aware of goal context and differentiates on forward-looking coaching — not reactive summaries.
+
+### S-008 — Reverse trial
+- **Shipped:** Step 8
+- **What:** 14-day full paid-tier access on signup. Day 15: drops to free (debrief only). Loss of WEEK AHEAD is the upgrade trigger. Implemented via `trial_started_at` + `getEffectiveTier()`.
+
+### S-009 — Persistent user memory
+- **Shipped:** Step 7
+- **What:** `user_memories` table. Haiku extraction after each debrief pulls max 3 `{key, value}` facts. Injected as `--- USER MEMORY ---` in debrief prompt with temporal filter (only memories before the run date). User can view/delete at `/dashboard/memories`.
+
+### S-011 — Length philosophy: impact over compression
+- **Shipped:** Prompt v4.1
+- **What:** WEEK AHEAD word target is a guideline that flexes to ~120 words when content demands it (injury, post-race, ultra recovery). Value-per-word, not arithmetic. Free tier: aim for 80-100.
+
+### B-002 — Haiku for free tier, Sonnet for paid
+- **Shipped:** Step 8
+- **What:** Decision made and implemented — not an A/B test. Haiku 4.5 for free tier (cost-controlled), Sonnet 4.6 for paid/trial. Branching in `app/api/runs/[id]/debrief/route.js`.
+
+### B-014 — Latest run card on dashboard
+- **Shipped:** Step 5.5
+- **What:** Card at top of dashboard showing most recent run with debrief preview, run stats, source badge (Strava), run type pill, and smart CTA ("Read full debrief →" vs "Get debrief →"). Latest-run bug fixed to sort by `started_at` not debrief date.
+
+### B-016 — Run type inference + badge display
+- **Shipped:** Step 6
+- **What:** Three-part fix: (1) `inferRunType()` fallback changed from `"easy"` → `"unknown"`. (2) Badge hidden when `run_type === "unknown"`. (3) DB migration reset 17 existing Strava runs that had been incorrectly tagged as easy.
