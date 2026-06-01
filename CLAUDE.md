@@ -52,7 +52,10 @@ apps/web/
 │   │   ├── runs/
 │   │   │   ├── route.js               (POST — create run)
 │   │   │   └── [id]/debrief/route.js  (POST — stream debrief)
-│   │   └── [id]/context/route.js  (POST — save context + run_type)
+│   │   ├── [id]/context/route.js  (POST — save context + run_type)
+│   │   └── memories/
+│   │       ├── route.js           (GET — list user memories)
+│   │       └── [id]/route.js      (DELETE — remove a memory)
 │   │   └── strava/
 │   │       ├── connect/route.js
 │   │       ├── callback/route.js
@@ -70,6 +73,9 @@ apps/web/
 │   │   │   └── [id]/debrief-stream.jsx
 │   │   │   └── [id]/context-gate.jsx
 │   │   │   └── [id]/debrief.module.css
+│   │   ├── memories/
+│   │   │   ├── page.jsx           (/dashboard/memories — Coach profile / What I Know About You)
+│   │   │   └── memories.module.css
 │   │   └── settings/
 │   │       ├── page.jsx           (/dashboard/settings — Strava connect)
 │   │       ├── strava-controls.jsx
@@ -88,7 +94,9 @@ apps/web/
 │   ├── db-migrate-step3.js        (runs + run_contexts tables)
 │   ├── db-migrate-step4.js        (debriefs table)
 │   ├── db-migrate-step5.js        (strava_connections table)
+│   ├── db-migrate-step7.js        (user_memories table)
 │   ├── format.js                  (formatDistance, formatDuration, formatPacePerMile, etc.)
+│   ├── memory-extract.js          (Haiku extraction call — pulls durable facts from debrief)
 │   ├── runs.js                    (getRunsForUser)
 │   ├── strava.js                  (Strava API client)
 │   └── strava-webhook-setup.js    (one-time webhook registration script)
@@ -124,6 +132,7 @@ apps/web/
 | `run_contexts` | Sleep, energy, stress per run | Step 3 |
 | `debriefs` | Generated debrief content + tokens | Step 4 |
 | `strava_connections` | OAuth tokens + athlete data | Step 5 |
+| `user_memories` | Extracted durable facts per user, key/value, linked to run | Step 7 |
 
 ---
 
@@ -188,8 +197,8 @@ SKILL v4.1 validated on Haiku 4.5 + Sonnet 4.6. All 15 test scenarios passed. Ba
 | 5.5 Dashboard polish | ✅ Done | Latest run card + debrief preview, source badge, smart CTA, empty state fix, latest-run bug fix (by date not debrief date) |
 | 6. Context form | ✅ Done | Context gate with labeled pills, run type picker (Strava only), `/api/runs/[id]/context`, prompt v4.2 |
 | 6.5 Prompt caching | ✅ Done | `cache_control: ephemeral` on system prompt block in debrief route; cache stats logged per request |
-| 7. Recent runs + user memory | ⬜ | **Next** |
-| 8. Paid tier + billing | ⬜ | Stripe, tier branching in debrief route |
+| 7. Recent runs + user memory | ✅ Done | Last 5 runs in prompt, user_memories table, Haiku extraction after debrief, Coach page (/dashboard/memories) |
+| 8. Paid tier + billing | ⬜ | Stripe, tier branching in debrief route | **Next** |
 | Alpha | ⬜ | After Step 8 — hand-picked runners, collect real feedback |
 | 8.5 Prompt hardening | ⬜ | After alpha — broaden persona beyond elite marathoners, tone calibration, goal-awareness pre-Step 10 |
 | 8.6 Test suite expansion | ⬜ | After 8.5 — add scenarios for non-elite runners, different distances (5K/10K/HM), lower fitness levels, varied goals; current 15 scenarios skew toward experienced marathoners |
@@ -200,17 +209,13 @@ SKILL v4.1 validated on Haiku 4.5 + Sonnet 4.6. All 15 test scenarios passed. Ba
 
 ---
 
-## Step 7 — recent runs + user memory (next to build)
+## Memory system — how it works (Step 7)
 
-**What to build:**
-- Pass the last 5 runs (date, type, distance, pace, HR) into the coaching prompt as a `--- RECENT RUNS ---` section
-- `user_memories` table — LLM extraction call after each debrief pulls durable facts (training history, injury history, life patterns, preferences)
-- "What I Know About You" screen — user can view, edit, and delete memory entries
-- Manually moderate memory writes for the first 20 users
-
-**Why it matters:** Without recent runs, the AI coaches each run in isolation. With them, it can spot patterns — back-to-back hard days, HR drift over a week, dropping pace on consecutive long runs.
-
-**Memory safety constraints (from S-009):** Extraction prompt must exclude weight, medications, inferred diagnoses, anything sensitive. Memory = training context only.
+- **Injection:** Before each debrief, `debrief/route.js` queries `user_memories` with `DISTINCT ON (key)` ordered by `created_at DESC` — one entry per key type, most recent wins. Injected as `--- USER MEMORY ---` in the user message.
+- **Extraction:** After each debrief saves, `memory-extract.js` fires a second Haiku call. Input: run summary + athlete notes + full debrief text. Returns max 3 `{key, value}` JSON facts. Awaited (not fire-and-forget) to survive serverless function lifecycle.
+- **Safety:** No weight, meds, clinical diagnoses. Training context only. User can delete any entry from `/dashboard/memories`.
+- **Deduplication:** `DISTINCT ON (key)` in injection query — if the same key appears multiple times, only the newest feeds into the prompt. All rows remain visible in Coach page for user review.
+- **Recent runs:** Last 5 runs (excluding current) injected as `--- RECENT RUNS ---` (date, type, distance, pace, HR).
 
 ---
 

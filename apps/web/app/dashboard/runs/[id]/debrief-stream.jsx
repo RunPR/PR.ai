@@ -1,9 +1,11 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 import styles from "./debrief.module.css";
 
 export default function DebriefStream({ runId, initialContent }) {
+  const router = useRouter();
   // If a complete debrief was already in the DB, render it directly.
   const [content, setContent] = useState(initialContent || "");
   const [status, setStatus] = useState(initialContent ? "complete" : "idle");
@@ -40,6 +42,7 @@ export default function DebriefStream({ runId, initialContent }) {
       }
 
       setStatus("complete");
+      router.refresh(); // bust router cache so dashboard shows "View debrief" on back navigation
     } catch (err) {
       console.error(err);
       setError(err.message || "Couldn't generate the debrief.");

@@ -144,7 +144,7 @@ const RUN_TYPE_LABELS = {
  * (splits, HR zones, RPE) are omitted entirely when absent — never "not provided"
  * — so the AI doesn't call them out as gaps.
  */
-export function buildUserMessage({ run, context, goal }) {
+export function buildUserMessage({ run, context, goal, recentRuns = [], memories = [] }) {
   const distanceMiles = run.distance_meters ? (run.distance_meters / 1609.344).toFixed(1) : "not provided";
   const rpe = run.raw_payload?.rpe;
 
@@ -175,7 +175,25 @@ Notes: ${run.notes || context?.notes || "not provided"}
 Target race: ${goal?.race_name || "not provided"}
 Race date: ${goal?.race_date || "not provided"}
 Goal finish time: ${goal?.goal_time || "not provided"}
-Current training week: ${goal?.week_number || "not provided"} of ${goal?.total_weeks || "not provided"}`;
+Current training week: ${goal?.week_number || "not provided"} of ${goal?.total_weeks || "not provided"}
+
+--- RECENT RUNS ---
+${recentRuns.length > 0
+  ? recentRuns.map(r => {
+      const mi = r.distance_meters ? (r.distance_meters / 1609.344).toFixed(1) : "?";
+      const pace = formatPace(r.distance_meters, r.duration_seconds);
+      const hr = r.avg_heart_rate ? `${r.avg_heart_rate} bpm` : null;
+      const type = RUN_TYPE_LABELS[r.run_type] || r.run_type || "Run";
+      const parts = [formatDate(r.started_at), type, `${mi} mi`, `${pace}/mi`];
+      if (hr) parts.push(hr);
+      return `- ${parts.join(" | ")}`;
+    }).join("\n")
+  : "No recent runs on file."}
+
+--- USER MEMORY ---
+${memories.length > 0
+  ? memories.map(m => `- ${m.key}: ${m.value}`).join("\n")
+  : "No memory on file yet."}`;
 }
 
 /**

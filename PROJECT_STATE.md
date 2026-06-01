@@ -36,6 +36,10 @@ This document is the single source of truth for what's done, what's in progress,
 | `apps/web/app/api/runs/[id]/context/route.js` | POST context + run_type for a run | Live |
 | `apps/web/app/dashboard/settings/` | Settings page — Strava connect/disconnect/sync UI | Live |
 | `apps/web/app/dashboard/runs/[id]/context-gate.jsx` | Context form gate — labeled pills, run type picker (Strava), stream transition | Live |
+| `apps/web/lib/memory-extract.js` | Haiku extraction call — pulls durable facts from debrief + notes, returns JSON | Live |
+| `apps/web/lib/db-migrate-step7.js` | `user_memories` table migration | Run locally |
+| `apps/web/app/api/memories/` | GET list + DELETE by id for user memories | Live |
+| `apps/web/app/dashboard/memories/` | Coach profile page — view + delete memories | Live |
 
 ---
 
@@ -80,8 +84,8 @@ This document is the single source of truth for what's done, what's in progress,
 | 5.5 Dashboard polish | ✅ Done | Latest run card, debrief preview, source badge, smart CTA, empty state fix, latest-run date bug fix |
 | 6. Context form | ✅ Done | Context gate, labeled pills, run type picker (Strava), `/api/runs/[id]/context`, prompt v4.2 |
 | 6.5 Prompt caching | ✅ Done | `cache_control: ephemeral` on system prompt block in debrief route; cache stats logged per request |
-| 7. Recent runs + user memory | ⬜ | |
-| 8. Paid tier + billing | ⬜ | Stripe, tier branching, reverse trial |
+| 7. Recent runs + user memory | ✅ Done | Last 5 runs in prompt, user_memories table + Haiku extraction, /dashboard/memories Coach page, back-button router cache fix |
+| 8. Paid tier + billing | ⬜ | Stripe, tier branching, reverse trial | **Next** |
 | Alpha | ⬜ | After Step 8 — hand-picked runners, real feedback |
 | 8.5 Prompt hardening | ⬜ | After alpha — broaden persona, tone calibration, goal-awareness |
 | 8.6 Test suite expansion | ⬜ | After 8.5 — new scenarios for non-elite runners, 5K/10K/HM distances, lower fitness levels, varied goals; current 15 scenarios skew elite marathon |

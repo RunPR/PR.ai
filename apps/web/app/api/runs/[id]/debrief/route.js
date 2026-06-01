@@ -3,11 +3,11 @@ import { sql } from "@vercel/postgres";
 import Anthropic from "@anthropic-ai/sdk";
 import { authOptions } from "@/lib/auth";
 import {
-  SYSTEM_PROMPT,
   PROMPT_VERSION,
   buildSystemPrompt,
   buildUserMessage,
 } from "@/lib/coach-prompt";
+import { extractMemories } from "@/lib/memory-extract";
 
 // Per RELEASE_GUIDE: Step 4 = free tier only. Haiku 4.5 + tier=free.
 // Step 8 will branch to Sonnet 4.6 for paid users.
@@ -59,7 +59,26 @@ export async function POST(request, { params }) {
     });
   }
 
-  // ── 3. Build prompts ───────────────────────────────────────────────
+  // ── 3. Fetch recent runs (last 5, excluding this one) ─────────────
+  const recentRunsResult = await sql`
+    SELECT id, started_at, run_type, distance_meters, duration_seconds, avg_heart_rate
+    FROM runs
+    WHERE user_id = ${userId} AND id != ${runId} AND deleted_at IS NULL
+    ORDER BY started_at DESC
+    LIMIT 5
+  `;
+  const recentRuns = recentRunsResult.rows;
+
+  // ── 4. Fetch user memories (most recent per key) ───────────────────
+  const memoriesResult = await sql`
+    SELECT DISTINCT ON (key) id, key, value
+    FROM user_memories
+    WHERE user_id = ${userId}
+    ORDER BY key, created_at DESC
+  `;
+  const memories = memoriesResult.rows;
+
+  // ── 5. Build prompts ───────────────────────────────────────────────
   const run = {
     started_at: row.started_at,
     run_type: row.run_type,
@@ -82,9 +101,9 @@ export async function POST(request, { params }) {
   const goal = null;
 
   const systemPrompt = buildSystemPrompt(TIER);
-  const userMessage = buildUserMessage({ run, context, goal });
+  const userMessage = buildUserMessage({ run, context, goal, recentRuns, memories });
 
-  // ── 4. Stream from Anthropic ──────────────────────────────────────
+  // ── 6. Stream from Anthropic ──────────────────────────────────────
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) {
     console.error("ANTHROPIC_API_KEY not set");
@@ -167,6 +186,33 @@ export async function POST(request, { params }) {
           `;
         } catch (dbErr) {
           console.error("debrief save error:", dbErr);
+        }
+
+        // Extract and persist memories after the debrief saves.
+        // Awaited here even though stream is already closed — fire-and-forget
+        // is unreliable in serverless after response completes.
+        if (!failed) {
+          try {
+            const runSummary = [
+              `Date: ${row.started_at}`,
+              `Type: ${row.run_type}`,
+              `Distance: ${row.distance_meters ? (row.distance_meters / 1609.344).toFixed(1) : "?"} miles`,
+            ].join(", ");
+            const notes = [row.notes, row.context_notes].filter(Boolean).join(" | ");
+
+            const facts = await extractMemories({ runSummary, debrief: fullText, notes });
+            for (const { key, value } of facts) {
+              await sql`
+                INSERT INTO user_memories (user_id, key, value, run_id)
+                VALUES (${userId}, ${key}, ${value}, ${runId})
+              `;
+            }
+            if (facts.length > 0) {
+              console.log(`[memory] extracted ${facts.length} facts for run ${runId}`);
+            }
+          } catch (memErr) {
+            console.error("[memory] extraction error:", memErr.message);
+          }
         }
       }
     },
