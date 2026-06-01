@@ -41,6 +41,7 @@ export default function GoalForm({ initialGoal }) {
       });
       if (!res.ok) throw new Error();
       setStatus("saved");
+      router.refresh();
       router.push("/dashboard");
     } catch {
       setStatus("error");
