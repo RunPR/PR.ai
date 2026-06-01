@@ -41,13 +41,16 @@ const STRESS_OPTIONS = [
 
 export default function ContextGate({ runId, hasContext, initialDebrief, source, runType }) {
   const router = useRouter();
+  const isStrava = source === "strava";
+  const needsType = isStrava && (!runType || runType === "unknown");
+
+  // Always show form for Strava runs missing a type, even if context exists.
+  // Once a debrief exists, go straight to it.
   const [phase, setPhase] = useState(
-    hasContext || initialDebrief ? "debrief" : "form"
+    initialDebrief ? "debrief" : (needsType ? "form" : (hasContext ? "debrief" : "form"))
   );
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
-
-  const isStrava = source === "strava";
 
   // Don't pre-select "unknown" — force the user to make an active choice
   const [selectedType, setSelectedType] = useState(
@@ -61,6 +64,10 @@ export default function ContextGate({ runId, hasContext, initialDebrief, source,
   const [showNotes, setShowNotes] = useState(false);
 
   async function handleSubmit() {
+    if (needsType && !selectedType) {
+      setError("Pick a run type before generating your debrief.");
+      return;
+    }
     setSaving(true);
     setError("");
     try {
@@ -144,9 +151,11 @@ export default function ContextGate({ runId, hasContext, initialDebrief, source,
         >
           {saving ? "Saving…" : "Get debrief →"}
         </button>
-        <button className={styles.contextSkip} onClick={() => setPhase("debrief")}>
-          skip
-        </button>
+        {!needsType && (
+          <button className={styles.contextSkip} onClick={() => setPhase("debrief")}>
+            skip
+          </button>
+        )}
       </div>
     </div>
   );
