@@ -20,7 +20,7 @@ export default function GoalForm({ initialGoal }) {
   const [raceName, setRaceName] = useState(initialGoal?.race_name ?? "");
   const [raceDistance, setRaceDistance] = useState(initialGoal?.race_distance ?? "");
   const [raceDate, setRaceDate] = useState(
-    initialGoal?.race_date ? initialGoal.race_date.split("T")[0] : ""
+    initialGoal?.race_date ? new Date(initialGoal.race_date).toISOString().split("T")[0] : ""
   );
   const [goalTime, setGoalTime] = useState(initialGoal?.goal_time ?? "");
   const [status, setStatus] = useState("idle");
