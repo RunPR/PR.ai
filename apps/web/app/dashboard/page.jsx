@@ -21,9 +21,11 @@ export default async function DashboardPage() {
   const name = session.user?.name || "runner";
   const userId = session.user?.id;
 
-  const runs = userId ? await getRunsForUser(userId, 20) : [];
-
-  const latestRun = userId ? await getLatestRun(userId) : null;
+  const [runs, latestRun, goalRow] = await Promise.all([
+    userId ? getRunsForUser(userId, 20) : Promise.resolve([]),
+    userId ? getLatestRun(userId) : Promise.resolve(null),
+    userId ? getGoal(userId) : Promise.resolve(null),
+  ]);
 
   return (
     <main className={styles.wrap}>
@@ -51,6 +53,8 @@ export default async function DashboardPage() {
           </span>
           <h1 className={styles.title}>Hi {name}.</h1>
         </div>
+
+        <GoalBanner goal={goalRow} />
 
         {latestRun && <LatestRunCard run={latestRun} />}
 
@@ -105,6 +109,14 @@ export default async function DashboardPage() {
   );
 }
 
+async function getGoal(userId) {
+  const { rows } = await sql`
+    SELECT race_name, race_distance, race_date, goal_time
+    FROM goals WHERE user_id = ${userId} LIMIT 1
+  `;
+  return rows[0] ?? null;
+}
+
 async function getLatestRun(userId) {
   const { rows } = await sql`
     SELECT
@@ -126,6 +138,52 @@ function getDebriefPreview(content) {
   const firstParagraph = withoutHeader.split(/\n\s*\n/)[0].trim();
   const plain = firstParagraph.replace(/\*\*([^*]+)\*\*/g, "$1");
   return plain.length <= 220 ? plain : plain.slice(0, 217) + "…";
+}
+
+function GoalBanner({ goal }) {
+  const hasGoal = goal?.race_distance;
+
+  if (hasGoal) {
+    const weeksOut = goal.race_date
+      ? Math.ceil((new Date(goal.race_date) - new Date()) / (7 * 24 * 60 * 60 * 1000))
+      : null;
+
+    return (
+      <Link href="/dashboard/goal" className={styles.goalEmpty}>
+        <div className={styles.goalEmptyText}>
+          <div className={styles.goalSetHeader}>
+            <span className={styles.goalEmptyLabel}>Race goal</span>
+            {goal.race_distance && (
+              <span className={styles.goalDistancePill}>{goal.race_distance}</span>
+            )}
+          </div>
+          <span className={styles.goalEmptyTitle}>{goal.race_name || goal.race_distance}</span>
+          <div className={styles.goalMeta}>
+            {goal.goal_time && (
+              <span className={styles.goalAccent}>{goal.goal_time}</span>
+            )}
+            {weeksOut > 0 && (
+              <>
+                {goal.goal_time && <span className={styles.goalMetaDivider}> · </span>}
+                <span className={styles.goalAccent}>{weeksOut} weeks out</span>
+              </>
+            )}
+          </div>
+        </div>
+        <span className={styles.goalEditCta}>Edit →</span>
+      </Link>
+    );
+  }
+
+  return (
+    <Link href="/dashboard/goal" className={styles.goalEmpty}>
+      <div className={styles.goalEmptyText}>
+        <span className={styles.goalEmptyLabel}>Race goal</span>
+        <span className={styles.goalEmptyTitle}>What are you training for?</span>
+      </div>
+      <span className={styles.goalEmptyCta}>Set goal →</span>
+    </Link>
+  );
 }
 
 function LatestRunCard({ run }) {

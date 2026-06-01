@@ -67,7 +67,7 @@ apps/web/
 │   │       ├── webhook/route.js
 │   │       └── disconnect/route.js
 │   ├── dashboard/
-│   │   ├── page.jsx               (/dashboard — runs list)
+│   │   ├── page.jsx               (/dashboard — runs list + goal banner)
 │   │   ├── dashboard.module.css
 │   │   ├── sign-out-button.jsx
 │   │   ├── runs/
@@ -77,6 +77,10 @@ apps/web/
 │   │   │   └── [id]/debrief-stream.jsx
 │   │   │   └── [id]/context-gate.jsx
 │   │   │   └── [id]/debrief.module.css
+│   │   ├── goal/
+│   │   │   ├── page.jsx           (/dashboard/goal — set/edit race goal)
+│   │   │   ├── goal-form.jsx      (client component — distance, name, date, time)
+│   │   │   └── goal.module.css
 │   │   ├── memories/
 │   │   │   ├── page.jsx           (/dashboard/memories — Coach profile / What I Know About You)
 │   │   │   └── memories.module.css
@@ -140,6 +144,7 @@ apps/web/
 | `debriefs` | Generated debrief content + tokens | Step 4 |
 | `strava_connections` | OAuth tokens + athlete data | Step 5 |
 | `user_memories` | Extracted durable facts per user, key/value, linked to run | Step 7 |
+| `goals` | Race goal per user — distance, name, date, goal time | Step 10 |
 
 ---
 
@@ -210,7 +215,7 @@ SKILL v4.1 validated on Haiku 4.5 + Sonnet 4.6. All 15 test scenarios passed. Ba
 | 8.5 Prompt hardening | ⬜ | After alpha — broaden persona beyond elite marathoners, tone calibration, goal-awareness pre-Step 10 |
 | 8.6 Test suite expansion | ⬜ | After 8.5 — add scenarios for non-elite runners, different distances (5K/10K/HM), lower fitness levels, varied goals; current 15 scenarios skew toward experienced marathoners |
 | 9. Plan ingestion | ⬜ | |
-| 10. Goal setting + onboarding | ⬜ | Goals table, race/time context in debrief |
+| 10. Goal setting + onboarding | ✅ Done | goals table, race distance + name + date + goal time, GoalBanner on dashboard, /dashboard/goal page, wired into debrief prompt |
 | 11. PWA polish | ⬜ | Web manifest, service worker |
 | 12. AI adaptive training plans | ⬜ | User brings their own plan (Pfitzinger, Higdon, etc.) — AI adapts it week-to-week based on run log, memory, and goal. Not generate-from-scratch. |
 
@@ -231,7 +236,7 @@ SKILL v4.1 validated on Haiku 4.5 + Sonnet 4.6. All 15 test scenarios passed. Ba
 - **No `app/app/` nesting.** The route is `/dashboard`, not `/app`. The Next.js router folder is `app/`, the route folder is `dashboard/`.
 - **Debrief caching.** Once generated, debriefs load from DB — no re-generation on page revisit.
 - **Strava runs don't auto-debrief.** They appear on dashboard; user clicks to trigger debrief.
-- **Goal context not wired yet.** Step 10. Currently `goal = null` in the debrief API route. The MISSING-DATA RULE handles it gracefully.
+- **Goal context wired (Step 10).** `goals` table, one row per user. Debrief route queries goal + computes `weeks_until_race` from run date. GoalBanner on dashboard links to `/dashboard/goal` — two-state card (empty prompt vs. set state with accent highlights).
 - **Tier branching.** `getEffectiveTier(user)` in `lib/stripe.js` returns 'paid' if tier='paid' OR tier='trial' with trial active. Debrief route queries DB for tier/trial_started_at on every request — never relies on stale session JWT.
 - **Monorepo, two Vercel projects.** Each app has its own `package.json` and deploys independently. Root directory set per project in Vercel.
 

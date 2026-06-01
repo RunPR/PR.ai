@@ -63,7 +63,20 @@ export async function POST(request, { params }) {
     });
   }
 
-  // ── 3. Fetch recent runs (last 5 before this run's date) ──────────
+  // ── 3. Fetch user goal ────────────────────────────────────────────
+  const goalResult = await sql`
+    SELECT race_name, race_distance, race_date, goal_time FROM goals WHERE user_id = ${userId} LIMIT 1
+  `;
+  const goalRow = goalResult.rows[0] ?? null;
+  let goal = null;
+  if (goalRow) {
+    const weeksUntilRace = goalRow.race_date
+      ? Math.max(0, Math.ceil((new Date(goalRow.race_date) - new Date(row.started_at)) / (7 * 24 * 60 * 60 * 1000)))
+      : null;
+    goal = { ...goalRow, weeks_until_race: weeksUntilRace };
+  }
+
+  // ── 4. Fetch recent runs (last 5 before this run's date) ──────────
   const recentRunsResult = await sql`
     SELECT id, started_at, run_type, distance_meters, duration_seconds, avg_heart_rate
     FROM runs
@@ -74,7 +87,7 @@ export async function POST(request, { params }) {
   `;
   const recentRuns = recentRunsResult.rows;
 
-  // ── 4. Fetch user memories created before this run ────────────────
+  // ── 5. Fetch user memories created before this run ────────────────
   const memoriesResult = await sql`
     SELECT DISTINCT ON (key) id, key, value
     FROM user_memories
@@ -83,7 +96,7 @@ export async function POST(request, { params }) {
   `;
   const memories = memoriesResult.rows;
 
-  // ── 5. Build prompts ───────────────────────────────────────────────
+  // ── 6. Build prompts ───────────────────────────────────────────────
   const run = {
     started_at: row.started_at,
     run_type: row.run_type,
@@ -102,8 +115,6 @@ export async function POST(request, { params }) {
     stress: row.stress,
     notes: row.context_notes,
   };
-  // Goal: not in schema yet. Step 10 adds the goals table.
-  const goal = null;
 
   const systemPrompt = buildSystemPrompt(TIER);
   const userMessage = buildUserMessage({ run, context, goal, recentRuns, memories });

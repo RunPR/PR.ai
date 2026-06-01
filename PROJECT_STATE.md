@@ -97,7 +97,7 @@ This document is the single source of truth for what's done, what's in progress,
 | 8.5 Prompt hardening | ⬜ | After alpha — broaden persona, tone calibration, goal-awareness |
 | 8.6 Test suite expansion | ⬜ | After 8.5 — new scenarios for non-elite runners, 5K/10K/HM distances, lower fitness levels, varied goals; current 15 scenarios skew elite marathon |
 | 9. Plan ingestion | ⬜ | |
-| 10. Goal setting + onboarding | ⬜ | Goals table, race/time context in debrief |
+| 10. Goal setting + onboarding | ✅ Done | goals table (distance, name, date, goal_time), GoalBanner on dashboard, /dashboard/goal edit page, wired into debrief prompt with weeks_until_race |
 | 11. PWA polish | ⬜ | Web manifest, service worker |
 | 12. AI adaptive training plans | ⬜ | User brings their own plan (Pfitzinger, Higdon, custom) — AI adapts week-to-week based on run log, user memory, and goal time. Plan adaptation, not generation from scratch. |
 

@@ -172,10 +172,11 @@ Stress level today: ${formatStress(context?.stress)}
 Notes: ${run.notes || context?.notes || "not provided"}
 
 --- MY GOAL ---
+Race distance: ${goal?.race_distance || "not provided"}
 Target race: ${goal?.race_name || "not provided"}
 Race date: ${goal?.race_date || "not provided"}
 Goal finish time: ${goal?.goal_time || "not provided"}
-Current training week: ${goal?.week_number || "not provided"} of ${goal?.total_weeks || "not provided"}
+Weeks until race: ${goal?.weeks_until_race != null ? goal.weeks_until_race : "not provided"}
 
 --- RECENT RUNS ---
 ${recentRuns.length > 0

@@ -293,8 +293,71 @@
   font-size: 0.95em;
 }
 
+/* ─── GOAL FORM ──────────────────────────────────────────────── */
+.goalForm {
+  display: flex;
+  flex-direction: column;
+  gap: 1.2rem;
+}
+
+.goalFields {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.goalField {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  flex: 1;
+  min-width: 140px;
+}
+
+.goalLabel {
+  font-family: var(--mono);
+  font-size: 0.66rem;
+  color: var(--fg-faint);
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+}
+
+.goalInput {
+  background: transparent;
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  color: var(--fg);
+  font-family: var(--mono);
+  font-size: 0.88rem;
+  padding: 0.6rem 0.85rem;
+  outline: none;
+  transition: border-color 0.12s;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.goalInput:focus {
+  border-color: var(--fg-dim);
+}
+
+.goalInput::placeholder {
+  color: var(--fg-faint);
+}
+
+.goalInput[type="date"]::-webkit-calendar-picker-indicator {
+  filter: invert(0.5);
+  cursor: pointer;
+}
+
+.goalError {
+  font-family: var(--mono);
+  font-size: 0.72rem;
+  color: var(--danger);
+}
+
 @media (max-width: 600px) {
   .wrap { padding: 0 1.4rem 4rem; }
   .cardWrap { padding: 1.5rem 1.4rem; }
   .controls { flex-direction: column; align-items: stretch; }
+  .goalFields { flex-direction: column; }
 }
