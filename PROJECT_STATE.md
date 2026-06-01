@@ -8,8 +8,8 @@ This document is the single source of truth for what's done, what's in progress,
 
 ## Where we are
 
-**Phase 0 — Skill hardening:** ✓ Complete (closed May 21, 2026).
-**Phase 1 — The 11-step build:** In progress. Steps 1–5.5 complete.
+**Phase 0 — Skill hardening:** ✓ Complete (closed May 21, 2026). Prompt since bumped to v4.2.
+**Phase 1 — The 11-step build:** In progress. Steps 1–6 complete. Step 7 is next.
 
 ---
 
@@ -17,21 +17,25 @@ This document is the single source of truth for what's done, what's in progress,
 
 | File / Area | Purpose | Status |
 |---|---|---|
-| `docs/SKILL.md` | System prompt spec, user message template, field reference | v4.1, locked |
+| `docs/SKILL.md` | System prompt spec, user message template, field reference | v4.2 |
 | `docs/DATABASE_SCHEMA.md` | Postgres schema for MVP | Final |
 | `docs/ARCHITECTURE.md` | Three-layer architecture, codebase structure, deployment topology | Final |
-| `docs/RELEASE_GUIDE.md` | Phase 0-4 release plan, stack decisions, 11-step build order | Final |
+| `docs/RELEASE_GUIDE.md` | Phase 0-4 release plan, stack decisions, build order | Updated |
 | `docs/TEST_SUITE.md` | 15 test scenarios with expected behaviors | Final |
 | `docs/SUGGESTIONS_LOG.md` | Full suggestions + backlog log (S-001–S-010, B-001–B-016) | Living document |
-| `prompts/system-prompt.txt` | Coaching prompt source of truth | v4.1 |
+| `prompts/system-prompt.txt` | Coaching prompt source of truth | v4.2 |
+| `prompts/system-prompt-v4.1.txt` | v4.1 backup — not used in production | Archived |
 | `test/test-harness.js` | Node.js harness — runs all 15 scenarios against Anthropic API | Ready, run between steps |
 | `test/rca_baseline_v4.1_2026-05-21.json` | Baseline test results | Exported May 21 |
 | `apps/landing/` | Next.js landing page + Resend waitlist | Live at https://pr-ai-landing.vercel.app |
 | `apps/web/` | Next.js product app — auth, dashboard, runs, debriefs, Strava | Live at https://pr-app-teal.vercel.app |
-| `apps/web/lib/strava.js` | Strava API client, token refresh, activity mapping | Live |
+| `apps/web/lib/strava.js` | Strava API client, token refresh, activity mapping, name-only type inference | Live |
+| `apps/web/lib/coach-prompt.js` | Coaching prompt v4.2, buildUserMessage, context label helpers | Live |
 | `apps/web/lib/db-migrate-step5.js` | `strava_connections` table migration | Run in prod |
 | `apps/web/app/api/strava/` | connect / callback / sync / webhook / disconnect routes | Live |
+| `apps/web/app/api/runs/[id]/context/route.js` | POST context + run_type for a run | Live |
 | `apps/web/app/dashboard/settings/` | Settings page — Strava connect/disconnect/sync UI | Live |
+| `apps/web/app/dashboard/runs/[id]/context-gate.jsx` | Context form gate — labeled pills, run type picker (Strava), stream transition | Live |
 
 ---
 
@@ -54,6 +58,8 @@ This document is the single source of truth for what's done, what's in progress,
 - **Strava runs:** Don't auto-debrief. User clicks "Get debrief →" to trigger generation.
 - **Free tier hardcoded:** `MODEL = "claude-haiku-4-5-20251001"`, `TIER = "free"`. Step 8 adds branching.
 - **Goal context:** Not wired yet (Step 10). MISSING-DATA RULE handles it gracefully.
+- **Context labels:** Energy/stress/sleep quality sent to AI as words (Low/Okay/Strong) not raw numbers.
+- **Technical prompt fields:** Splits, HR zones, RPE omitted from prompt entirely when absent — not "not provided".
 
 ### Test suite
 - 15 scenarios: core runs (A1–A5), edge cases (B1–B4), sensitive content (C1–C3), robustness (D1–D3).
@@ -71,19 +77,23 @@ This document is the single source of truth for what's done, what's in progress,
 | 3. Manual run entry | ✅ Done | `/dashboard/runs/new`, runs + run_contexts tables |
 | 4. First debrief | ✅ Done | Streaming, cached in DB, `/dashboard/runs/[id]` |
 | 5. Strava connection | ✅ Done | OAuth + webhook + sync live in prod |
-| 5.5 Dashboard polish | ✅ Done | Latest run card, debrief preview, source badge, smart CTA, empty state fix |
-| 6. Context form | 🔄 Next | Context capture for Strava runs before debrief + B-016 run type fix |
-| 7. Recent runs + user memory | ⬜ | |
+| 5.5 Dashboard polish | ✅ Done | Latest run card, debrief preview, source badge, smart CTA, empty state fix, latest-run date bug fix |
+| 6. Context form | ✅ Done | Context gate, labeled pills, run type picker (Strava), `/api/runs/[id]/context`, prompt v4.2 |
+| 7. Recent runs + user memory | 🔄 Next | |
 | 8. Paid tier + billing | ⬜ | Stripe, tier branching, reverse trial |
+| Alpha | ⬜ | After Step 8 — hand-picked runners, real feedback |
+| 8.5 Prompt hardening | ⬜ | After alpha — broaden persona, tone calibration, goal-awareness |
+| 8.6 Test suite expansion | ⬜ | After 8.5 — new scenarios for non-elite runners, 5K/10K/HM distances, lower fitness levels, varied goals; current 15 scenarios skew elite marathon |
 | 9. Plan ingestion | ⬜ | |
 | 10. Goal setting + onboarding | ⬜ | Goals table, race/time context in debrief |
 | 11. PWA polish | ⬜ | Web manifest, service worker |
 
 ---
 
-## Known bugs / pre-step-6 fixes
+## Known bugs
 
-- **B-016 — Run type defaults to "easy":** Manual form defaults to "easy" and users don't change it. Strava `inferRunType()` also falls back to "easy" for most activities. Fix in Step 6.
+- **B-015 — Free-tier word count:** Free debriefs running 130–175 words vs 80–100 target. Fix before Step 8.
+- **B-016 — Run type inference + badge display:** ✅ Fixed in Step 6. Three-part fix: (1) `inferRunType()` fallback changed from `"easy"` → `"unknown"` — name signals + 16km threshold only, pace heuristic removed. (2) `LatestRunCard` and `RunRow` now hide badge when `run_type === "unknown"`. (3) DB migration reset 17 existing Strava runs that had `"easy"` baked in from old fallback. **Prod migration still needed** — run the same SQL against prod Neon DB before launch.
 
 ---
 

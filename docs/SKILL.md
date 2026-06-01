@@ -34,8 +34,8 @@ to run. Runna gives you a plan. We make all of it fit your life and your goal.*
 Reverse trial → freemium. New users get 14 days of full paid-tier access, then
 drop to free tier on day 15.
 
-- **Free tier = reaction.** Daily debrief, ~100 words, today's run only. One
-  generic recovery action.
+- **Free tier = reaction.** Daily debrief, ~100 words, today's run only. Closes
+  with one motivating directional statement (not a generic recovery action).
 - **Paid tier = reaction + direction.** Daily debrief PLUS `THE WEEK AHEAD` — a
   forward-looking adjustment block that adapts the user's plan based on what
   today's run revealed. Paid tier also supports plan ingestion (bring your own

@@ -11,7 +11,7 @@ import {
   RUN_TYPE_LABELS,
 } from "@/lib/format";
 import styles from "./debrief.module.css";
-import DebriefStream from "./debrief-stream";
+import ContextGate from "./context-gate";
 
 export default async function DebriefPage({ params }) {
   const session = await getServerSession(authOptions);
@@ -23,7 +23,7 @@ export default async function DebriefPage({ params }) {
   // Load the run and any existing debrief.
   const runResult = await sql`
     SELECT
-      r.id, r.started_at, r.run_type,
+      r.id, r.started_at, r.run_type, r.source,
       r.distance_meters, r.duration_seconds, r.avg_pace_seconds_per_km,
       r.avg_heart_rate, r.notes, r.raw_payload,
       c.sleep_hours, c.sleep_quality, c.energy, c.stress, c.notes AS context_notes,
@@ -39,10 +39,8 @@ export default async function DebriefPage({ params }) {
   const run = runResult.rows[0];
   const rpe = run.raw_payload?.rpe;
 
-  // If a complete debrief exists, render it directly (no streaming).
-  // Otherwise the client component will trigger the stream.
-  const existingDebrief =
-    run.debrief_status === "complete" ? run.debrief_content : null;
+  const existingDebrief = run.debrief_status === "complete" ? run.debrief_content : null;
+  const hasContext = run.sleep_hours != null || run.energy != null || run.stress != null;
 
   return (
     <main className={styles.wrap}>
@@ -60,9 +58,11 @@ export default async function DebriefPage({ params }) {
       <section className={styles.summary}>
         <div className={styles.summaryHeader}>
           <span className={styles.runDate}>{formatDate(run.started_at)}</span>
-          <span className={styles.runType}>
-            {RUN_TYPE_LABELS[run.run_type] || run.run_type}
-          </span>
+          {run.run_type && run.run_type !== "unknown" && (
+            <span className={styles.runType}>
+              {RUN_TYPE_LABELS[run.run_type] || run.run_type}
+            </span>
+          )}
         </div>
 
         <div className={styles.statsGrid}>
@@ -93,7 +93,13 @@ export default async function DebriefPage({ params }) {
           <span>Your coach's read</span>
         </div>
 
-        <DebriefStream runId={runId} initialContent={existingDebrief} />
+        <ContextGate
+          runId={runId}
+          hasContext={hasContext}
+          initialDebrief={existingDebrief}
+          source={run.source}
+          runType={run.run_type}
+        />
       </section>
     </main>
   );

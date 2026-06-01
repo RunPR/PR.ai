@@ -139,7 +139,9 @@ function LatestRunCard({ run }) {
           </span>
           <div className={styles.latestRunDate}>{formatDate(run.started_at)}</div>
         </div>
-        <span className={styles.runTypePill}>{RUN_TYPE_LABELS[run.run_type] || run.run_type}</span>
+        {run.run_type && run.run_type !== "unknown" && (
+          <span className={styles.runTypePill}>{RUN_TYPE_LABELS[run.run_type] || run.run_type}</span>
+        )}
       </div>
 
       <div className={styles.latestRunStats}>
@@ -180,7 +182,9 @@ function RunRow({ run }) {
     <Link href={`/dashboard/runs/${run.id}`} className={styles.runRow}>
       <div className={styles.runDate}>
         <span className={styles.runDateText}>{formatDate(run.started_at)}</span>
-        <span className={styles.runType}>{RUN_TYPE_LABELS[run.run_type] || run.run_type}</span>
+        {run.run_type && run.run_type !== "unknown" && (
+          <span className={styles.runType}>{RUN_TYPE_LABELS[run.run_type] || run.run_type}</span>
+        )}
         {run.source === "strava" && <span className={styles.sourceTag}>Strava</span>}
       </div>
 

@@ -124,11 +124,24 @@ export function mapStravaActivityToRun(activity) {
 }
 
 function inferRunType(activity) {
+  // Strava's workout_type is authoritative when explicitly set by the user
   if (activity.workout_type === 1) return "race";
   if (activity.workout_type === 2) return "long";
   if (activity.workout_type === 3) return "intervals";
 
   const km = activity.distance / 1000;
+  const name = (activity.name || "").toLowerCase();
+
+  // Name signals — reliable when the runner named the activity themselves
+  if (/race|parkrun|\b5k\b|\b10k\b|half.?marathon|\bmarathon\b/.test(name)) return "race";
+  if (/\blong\b/.test(name)) return "long";
+  if (/tempo|threshold/.test(name)) return "tempo";
+  if (/interval|repeat|\btrack\b|fartlek|workout/.test(name)) return "intervals";
+  if (/\brecovery\b/.test(name)) return "recovery";
+
+  // Distance is objective — 16km+ is a long run regardless of naming
   if (km >= 16) return "long";
-  return "easy";
+
+  // No confident signal — context gate will let the user confirm
+  return "unknown";
 }

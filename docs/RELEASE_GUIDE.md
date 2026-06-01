@@ -50,6 +50,8 @@ See `ARCHITECTURE_DIAGRAM.md` for the visual.
 
 **Result:** All 15 scenarios passed on Haiku 4.5 and Sonnet 4.6. Prompt locked as v4.1. Baseline at `test/rca_baseline_v4.1_2026-05-21.json`. Note: free-tier word counts run 130–175 words vs 80–100 target — flagged as B-015, fix before Step 8.
 
+**Prompt since updated to v4.2 (May 31, 2026):** Added COACHING PHILOSOPHY section (training-forward posture, research-grounded rest signals); rewrote free tier ending from generic recovery action to motivating directional statement; context labels now words not numbers; technical fields (splits, HR zones, RPE) omitted from prompt when absent. v4.1 archived at `prompts/system-prompt-v4.1.txt`. All 15 tests passed on v4.2.
+
 ---
 
 ## Phase 1 — The 11-step build
@@ -87,17 +89,20 @@ next. No exceptions.
 - Source badge (Strava vs manual) on run rows
 - "Get debrief →" vs "View debrief →" based on debrief status
 - Empty-state fix when only one run exists
+- Bug fix: hero card now always shows most recent run by date, not most recently generated debrief
 
-### Step 6 — Context form 🔄 Next
-- Strava runs have no context (sleep/energy/stress) — MISSING-DATA guardrail fires on every debrief
-- Show context form inline on `/dashboard/runs/[id]` when no `run_contexts` row exists
-- Skippable; skip generates debrief with "not provided" fields
-- Also fixing B-016: run type defaulting to "easy" in both manual form and Strava heuristic
-- **No schema changes needed** — `run_contexts` table exists from Step 3
+### Step 6 — Context form ✅ Done
+- Context gate on `/dashboard/runs/[id]` — shows quick-tap form before debrief for runs with no context
+- Labeled pills: Sleep, Sleep quality (Poor/Okay/Great), Energy (Low/Okay/Strong), Stress (Low/Some/High)
+- Run type picker (Strava only) — Easy/Tempo/Long/Intervals/Recovery/Race — pre-selected from inference, user can correct
+- Skip option — generates debrief without context
+- `/api/runs/[id]/context` POST — saves to `run_contexts`, optionally updates `runs.run_type`
+- B-016 fixed: `inferRunType()` uses name signals + 16km distance threshold only (pace heuristic removed)
+- Prompt v4.2: COACHING PHILOSOPHY, training-forward posture, context labels as words
 
-### Step 7 — Recent runs + user memory
-- Last 5 runs passed to coaching service
-- `user_memories` table + extraction prompt after each debrief
+### Step 7 — Recent runs + user memory 🔄 Next
+- Last 5 runs passed to coaching service as `--- RECENT RUNS ---` section
+- `user_memories` table + LLM extraction prompt after each debrief
 - "What I Know About You" screen — view, edit, delete
 - Manually moderate memory writes for the first 20 users
 - **Weekends: 2**
@@ -110,6 +115,22 @@ next. No exceptions.
 - Faded WEEK AHEAD ghost UI on free tier (S-010 paywall moment)
 - **Validates: monetization works**
 - **Weekends: 2**
+
+### Alpha — Hand-picked user testing (after Step 8)
+- 5–10 runners Arturo knows personally, mix of Strava + manual users
+- Full paid-tier access for all alpha users (no Stripe gate)
+- Personal onboarding call per user
+- Weekly check-in: what did the debriefs get right? Wrong? What's missing?
+- Track all feedback, look for patterns
+- **Exit criteria:** Clear top 3 issues to fix before Step 8.5
+- **Duration: 2–4 weeks**
+
+### Step 8.5 — Prompt hardening (after alpha)
+- Broaden persona beyond elite marathon runners — any runner with a goal
+- Tone calibration for different fitness levels (beginner vs. competitive)
+- Goal-awareness improvements before Step 10 wires the goals table
+- Fix real issues surfaced during alpha — not assumptions
+- Run full test suite after every prompt change
 
 ### Step 9 — Plan ingestion
 - "Paste your training plan" textarea

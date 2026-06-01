@@ -306,6 +306,157 @@
   text-transform: uppercase;
 }
 
+/* ─── CONTEXT FORM ─────────────────────────────────────────── */
+.contextForm {
+  display: flex;
+  flex-direction: column;
+  gap: 1.8rem;
+}
+
+.contextFormEyebrow {
+  font-family: var(--mono);
+  font-size: 0.72rem;
+  color: var(--fg-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+}
+
+.contextField {
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+}
+
+.contextFieldLabel {
+  font-family: var(--mono);
+  font-size: 0.66rem;
+  color: var(--fg-faint);
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+}
+
+.pills {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.pill {
+  font-family: var(--mono);
+  font-size: 0.78rem;
+  color: var(--fg-dim);
+  background: transparent;
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  padding: 0.45rem 0.9rem;
+  cursor: pointer;
+  min-width: 2.8rem;
+  text-align: center;
+  transition: color 0.12s, border-color 0.12s, background 0.12s;
+}
+
+.pill:hover {
+  border-color: var(--fg-dim);
+  color: var(--fg);
+}
+
+.pillActive {
+  border-color: var(--accent);
+  color: var(--accent);
+  background: rgba(212, 255, 58, 0.07);
+}
+
+.notesInput {
+  width: 100%;
+  background: transparent;
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  color: var(--fg);
+  font-family: var(--serif);
+  font-size: 0.95rem;
+  font-weight: 300;
+  padding: 0.8rem 1rem;
+  resize: none;
+  outline: none;
+  transition: border-color 0.12s;
+  box-sizing: border-box;
+}
+
+.notesInput:focus {
+  border-color: var(--fg-dim);
+}
+
+.notesInput::placeholder {
+  color: var(--fg-faint);
+}
+
+.addNote {
+  background: none;
+  border: none;
+  padding: 0;
+  font-family: var(--mono);
+  font-size: 0.72rem;
+  color: var(--fg-dim);
+  letter-spacing: 0.08em;
+  cursor: pointer;
+  text-align: left;
+  transition: color 0.12s;
+}
+
+.addNote:hover {
+  color: var(--fg);
+}
+
+.contextError {
+  font-family: var(--mono);
+  font-size: 0.72rem;
+  color: var(--danger);
+  letter-spacing: 0.05em;
+}
+
+.contextActions {
+  display: flex;
+  align-items: center;
+  gap: 1.6rem;
+  margin-top: 0.4rem;
+}
+
+.contextSubmit {
+  background: var(--accent);
+  color: #0a0a0a;
+  border: none;
+  border-radius: 4px;
+  font-family: var(--mono);
+  font-size: 0.78rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  padding: 0.75rem 1.6rem;
+  cursor: pointer;
+  transition: opacity 0.12s;
+}
+
+.contextSubmit:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.contextSkip {
+  background: none;
+  border: none;
+  padding: 0;
+  font-family: var(--mono);
+  font-size: 0.72rem;
+  color: var(--fg-faint);
+  letter-spacing: 0.08em;
+  cursor: pointer;
+  transition: color 0.12s;
+}
+
+.contextSkip:hover {
+  color: var(--fg-dim);
+}
+
 @media (max-width: 600px) {
   .wrap { padding: 0 1.4rem 4rem; }
   .summary { padding: 2.5rem 0 1.5rem; }

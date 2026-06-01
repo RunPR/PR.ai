@@ -24,14 +24,14 @@ PR.ai/
 │   ├── landing/         → https://pr-ai-landing.vercel.app  (Next.js marketing + waitlist)
 │   └── web/             → https://pr-app-teal.vercel.app    (Next.js product app)
 ├── docs/
-│   ├── SKILL.md         (v4.1 coaching prompt spec)
+│   ├── SKILL.md         (v4.2 coaching prompt spec)
 │   ├── DATABASE_SCHEMA.md
 │   ├── ARCHITECTURE.md
 │   ├── RELEASE_GUIDE.md
 │   ├── TEST_SUITE.md
 │   └── SUGGESTIONS_LOG.md
 ├── prompts/
-│   └── system-prompt.txt  (v4.1 — source of truth for the coaching prompt)
+│   └── system-prompt.txt  (v4.2 — source of truth for the coaching prompt)
 ├── test/
 │   ├── test-harness.js
 │   ├── test_suite.jsx     (v4.1 — fixed, validated)
@@ -52,6 +52,7 @@ apps/web/
 │   │   ├── runs/
 │   │   │   ├── route.js               (POST — create run)
 │   │   │   └── [id]/debrief/route.js  (POST — stream debrief)
+│   │   └── [id]/context/route.js  (POST — save context + run_type)
 │   │   └── strava/
 │   │       ├── connect/route.js
 │   │       ├── callback/route.js
@@ -67,6 +68,7 @@ apps/web/
 │   │   │   ├── new/new.module.css
 │   │   │   └── [id]/page.jsx      (/dashboard/runs/[id] — debrief page)
 │   │   │   └── [id]/debrief-stream.jsx
+│   │   │   └── [id]/context-gate.jsx
 │   │   │   └── [id]/debrief.module.css
 │   │   └── settings/
 │   │       ├── page.jsx           (/dashboard/settings — Strava connect)
@@ -81,7 +83,7 @@ apps/web/
 │   └── auth.module.css
 ├── lib/
 │   ├── auth.js                    (NextAuth options)
-│   ├── coach-prompt.js            (v4.1 prompt + buildUserMessage + buildSystemPrompt)
+│   ├── coach-prompt.js            (v4.2 prompt + buildUserMessage + buildSystemPrompt + context label helpers)
 │   ├── db-init.js                 (users table)
 │   ├── db-migrate-step3.js        (runs + run_contexts tables)
 │   ├── db-migrate-step4.js        (debriefs table)
@@ -125,16 +127,18 @@ apps/web/
 
 ---
 
-## Coaching prompt — SKILL v4.1
+## Coaching prompt — SKILL v4.2
 
-- **File:** `prompts/system-prompt.txt` (source of truth)
+- **File:** `prompts/system-prompt.txt` (source of truth) — v4.1 backed up at `prompts/system-prompt-v4.1.txt`
 - **In code:** `apps/web/lib/coach-prompt.js` (embedded, no file IO at runtime)
 - **Tier injection:** `SYSTEM_PROMPT.replace("{{tier}}", tier)` — never append to user message
-- **Free tier:** Haiku 4.5, `tier="free"` → THE DEBRIEF only (~80-100 words, one recovery action)
+- **Free tier:** Haiku 4.5, `tier="free"` → THE DEBRIEF only (~80-100 words, motivating directional close)
 - **Paid tier:** Sonnet 4.6, `tier="paid"` → THE DEBRIEF + THE WEEK AHEAD
 - **Model constants** in `app/api/runs/[id]/debrief/route.js`: `MODEL` and `TIER` — Step 8 adds branching logic
 - **INJURY RULE:** no clinical terms (tendinitis, fasciitis, ITBS, etc.) — neutral language only
-- **MISSING-DATA RULE:** if context not provided, teach the user what they're missing, don't guess
+- **MISSING-DATA RULE:** applies to context fields users CAN provide (sleep, energy, stress, notes). Technical fields (splits, HR zones, RPE) are omitted from the prompt entirely when absent — never shown as "not provided"
+- **COACHING PHILOSOPHY:** training-forward by default. Easy day = easy running, not rest. Rest only warranted by genuine signals (injury, back-to-back hard sessions within 48h, RHR elevated 3+ days, sleep <5h + high stress + hard effort all together). Grounded in Bowerman/Pfitzinger/Seiler research + Nick Bare/Max Jolliffe/Andy Glaze philosophy.
+- **Context labels:** energy/stress/sleep quality sent to AI as words (Low/Okay/Strong, Poor/Okay/Great) not numbers
 
 ---
 
@@ -170,7 +174,7 @@ Results write to `test/results/test-results-latest.json`. All 15 scenarios must 
 ## Phase + step status
 
 ### Phase 0 — ✅ Complete (May 21, 2026)
-SKILL v4.1 validated on Haiku 4.5 + Sonnet 4.6. All 15 test scenarios passed. Baseline at `test/rca_baseline_v4.1_2026-05-21.json`.
+SKILL v4.1 validated on Haiku 4.5 + Sonnet 4.6. All 15 test scenarios passed. Baseline at `test/rca_baseline_v4.1_2026-05-21.json`. Prompt since updated to v4.2 (May 31, 2026) — see coaching prompt section.
 
 ### Phase 1 — In progress
 
@@ -181,31 +185,30 @@ SKILL v4.1 validated on Haiku 4.5 + Sonnet 4.6. All 15 test scenarios passed. Ba
 | 3. Manual run entry | ✅ Done | `/dashboard/runs/new`, runs + run_contexts tables |
 | 4. First debrief | ✅ Done | Streaming, cached in DB, `/dashboard/runs/[id]` |
 | 5. Strava connection | ✅ Done | OAuth + webhook + sync live in prod |
-| 5.5 Dashboard polish | ✅ Done | Latest run card + debrief preview, source badge, smart debrief CTA, empty state fix |
-| 6. Context form | ⬜ | |
-| 7. Recent runs + user memory | ⬜ | |
+| 5.5 Dashboard polish | ✅ Done | Latest run card + debrief preview, source badge, smart CTA, empty state fix, latest-run bug fix (by date not debrief date) |
+| 6. Context form | ✅ Done | Context gate with labeled pills, run type picker (Strava only), `/api/runs/[id]/context`, prompt v4.2 |
+| 7. Recent runs + user memory | ⬜ | **Next** |
 | 8. Paid tier + billing | ⬜ | Stripe, tier branching in debrief route |
+| Alpha | ⬜ | After Step 8 — hand-picked runners, collect real feedback |
+| 8.5 Prompt hardening | ⬜ | After alpha — broaden persona beyond elite marathoners, tone calibration, goal-awareness pre-Step 10 |
+| 8.6 Test suite expansion | ⬜ | After 8.5 — add scenarios for non-elite runners, different distances (5K/10K/HM), lower fitness levels, varied goals; current 15 scenarios skew toward experienced marathoners |
 | 9. Plan ingestion | ⬜ | |
 | 10. Goal setting + onboarding | ⬜ | Goals table, race/time context in debrief |
 | 11. PWA polish | ⬜ | Web manifest, service worker, last step |
 
 ---
 
-## Step 6 — context form (next to build)
+## Step 7 — recent runs + user memory (next to build)
 
-**Problem:** Strava runs have no context (sleep, energy, stress). When a user clicks "Get debrief →" on a Strava run, the debrief generates with no context — triggering the MISSING-DATA guardrail every time. Manual runs capture context at log time, so they're fine.
+**What to build:**
+- Pass the last 5 runs (date, type, distance, pace, HR) into the coaching prompt as a `--- RECENT RUNS ---` section
+- `user_memories` table — LLM extraction call after each debrief pulls durable facts (training history, injury history, life patterns, preferences)
+- "What I Know About You" screen — user can view, edit, and delete memory entries
+- Manually moderate memory writes for the first 20 users
 
-**What to build:** When a user navigates to `/dashboard/runs/[id]` for a run with no context, show a lightweight context form (sleep hours, sleep quality, energy, stress, optional notes) before the debrief generates. After submitting, save to `run_contexts` and proceed to the debrief.
+**Why it matters:** Without recent runs, the AI coaches each run in isolation. With them, it can spot patterns — back-to-back hard days, HR drift over a week, dropping pace on consecutive long runs.
 
-**Approach:**
-- Check in `app/dashboard/runs/[id]/page.jsx` whether `run_contexts` row exists for this run
-- If missing context → render the context form inline (not a redirect — keep it on the same page)
-- Include a "Skip" option that generates the debrief without context
-- On submit → POST to a new `/api/runs/[id]/context` route → save to `run_contexts` → stream debrief
-
-**No schema changes needed.** `run_contexts` table already exists from Step 3.
-
-**Known bug to fix in this step (B-016):** Run type defaults to "easy" for most runs. Fix the manual form default and improve `inferRunType()` heuristics in `lib/strava.js`.
+**Memory safety constraints (from S-009):** Extraction prompt must exclude weight, medications, inferred diagnoses, anything sensitive. Memory = training context only.
 
 ---
 
