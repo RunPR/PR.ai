@@ -63,21 +63,22 @@ export async function POST(request, { params }) {
     });
   }
 
-  // ── 3. Fetch recent runs (last 5, excluding this one) ─────────────
+  // ── 3. Fetch recent runs (last 5 before this run's date) ──────────
   const recentRunsResult = await sql`
     SELECT id, started_at, run_type, distance_meters, duration_seconds, avg_heart_rate
     FROM runs
     WHERE user_id = ${userId} AND id != ${runId} AND deleted_at IS NULL
+      AND started_at < ${row.started_at}
     ORDER BY started_at DESC
     LIMIT 5
   `;
   const recentRuns = recentRunsResult.rows;
 
-  // ── 4. Fetch user memories (most recent per key) ───────────────────
+  // ── 4. Fetch user memories created before this run ────────────────
   const memoriesResult = await sql`
     SELECT DISTINCT ON (key) id, key, value
     FROM user_memories
-    WHERE user_id = ${userId}
+    WHERE user_id = ${userId} AND created_at < ${row.started_at}
     ORDER BY key, created_at DESC
   `;
   const memories = memoriesResult.rows;

@@ -56,6 +56,10 @@ apps/web/
 │   │   └── memories/
 │   │       ├── route.js           (GET — list user memories)
 │   │       └── [id]/route.js      (DELETE — remove a memory)
+│   │   ├── stripe/
+│   │   │   ├── checkout/route.js  (POST — create Checkout Session)
+│   │   │   ├── webhook/route.js   (POST — subscription lifecycle events)
+│   │   │   └── portal/route.js    (POST — create Customer Portal session)
 │   │   └── strava/
 │   │       ├── connect/route.js
 │   │       ├── callback/route.js
@@ -77,7 +81,8 @@ apps/web/
 │   │   │   ├── page.jsx           (/dashboard/memories — Coach profile / What I Know About You)
 │   │   │   └── memories.module.css
 │   │   └── settings/
-│   │       ├── page.jsx           (/dashboard/settings — Strava connect)
+│   │       ├── page.jsx           (/dashboard/settings — Plan + Strava)
+│   │       ├── billing-controls.jsx
 │   │       ├── strava-controls.jsx
 │   │       └── settings.module.css
 │   ├── login/page.jsx
@@ -95,6 +100,8 @@ apps/web/
 │   ├── db-migrate-step4.js        (debriefs table)
 │   ├── db-migrate-step5.js        (strava_connections table)
 │   ├── db-migrate-step7.js        (user_memories table)
+│   ├── db-migrate-step8.js        (stripe_subscription_id on users)
+│   ├── stripe.js                  (Stripe client, PRICE_ID, getEffectiveTier, trialDaysRemaining)
 │   ├── format.js                  (formatDistance, formatDuration, formatPacePerMile, etc.)
 │   ├── memory-extract.js          (Haiku extraction call — pulls durable facts from debrief)
 │   ├── runs.js                    (getRunsForUser)
@@ -119,7 +126,7 @@ apps/web/
 | Strava | OAuth 2.0 + webhooks |
 | Email | Resend (waitlist notifications) |
 | Hosting | Vercel (both apps) |
-| Billing | Stripe (Step 8, not yet built) |
+| Billing | Stripe — Checkout, webhooks, Customer Portal (sandbox keys, live before alpha) |
 
 ---
 
@@ -143,7 +150,7 @@ apps/web/
 - **Tier injection:** `SYSTEM_PROMPT.replace("{{tier}}", tier)` — never append to user message
 - **Free tier:** Haiku 4.5, `tier="free"` → THE DEBRIEF only (~80-100 words, motivating directional close)
 - **Paid tier:** Sonnet 4.6, `tier="paid"` → THE DEBRIEF + THE WEEK AHEAD
-- **Model constants** in `app/api/runs/[id]/debrief/route.js`: `MODEL` and `TIER` — Step 8 adds branching logic
+- **Tier branching** in `app/api/runs/[id]/debrief/route.js`: queries DB for `tier` + `trial_started_at` on every request, calls `getEffectiveTier()` — Haiku 4.5 for free, Sonnet 4.6 for paid/trial-active
 - **INJURY RULE:** no clinical terms (tendinitis, fasciitis, ITBS, etc.) — neutral language only
 - **MISSING-DATA RULE:** applies to context fields users CAN provide (sleep, energy, stress, notes). Technical fields (splits, HR zones, RPE) are omitted from the prompt entirely when absent — never shown as "not provided"
 - **COACHING PHILOSOPHY:** training-forward by default. Easy day = easy running, not rest. Rest only warranted by genuine signals (injury, back-to-back hard sessions within 48h, RHR elevated 3+ days, sleep <5h + high stress + hard effort all together). Grounded in Bowerman/Pfitzinger/Seiler research + Nick Bare/Max Jolliffe/Andy Glaze philosophy.
@@ -253,3 +260,6 @@ SKILL v4.1 validated on Haiku 4.5 + Sonnet 4.6. All 15 test scenarios passed. Ba
 | `STRAVA_CLIENT_ID` | `.env.local` + Vercel | Strava OAuth |
 | `STRAVA_CLIENT_SECRET` | `.env.local` + Vercel | Strava OAuth |
 | `STRAVA_WEBHOOK_VERIFY_TOKEN` | `.env.local` + Vercel | Webhook handshake |
+| `STRIPE_SECRET_KEY` | `.env.local` + Vercel | Stripe API (sandbox now, live before alpha) |
+| `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY` | `.env.local` + Vercel | Stripe client-side key |
+| `STRIPE_WEBHOOK_SECRET` | `.env.local` + Vercel | Stripe webhook signature verification |

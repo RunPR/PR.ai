@@ -1,6 +1,6 @@
 # PR.ai — Project State
 
-**As of:** May 31, 2026
+**As of:** June 1, 2026
 
 This document is the single source of truth for what's done, what's in progress, and what's next. Update after every significant work session.
 
@@ -9,7 +9,7 @@ This document is the single source of truth for what's done, what's in progress,
 ## Where we are
 
 **Phase 0 — Skill hardening:** ✓ Complete (closed May 21, 2026). Prompt since bumped to v4.2.
-**Phase 1 — The 11-step build:** In progress. Steps 1–6 complete. Step 7 is next.
+**Phase 1 — The 11-step build:** In progress. Steps 1–8 complete. Alpha is next.
 
 ---
 
@@ -37,11 +37,11 @@ This document is the single source of truth for what's done, what's in progress,
 | `apps/web/app/dashboard/settings/` | Settings page — Strava connect/disconnect/sync UI | Live |
 | `apps/web/app/dashboard/runs/[id]/context-gate.jsx` | Context form gate — labeled pills, run type picker (Strava), stream transition | Live |
 | `apps/web/lib/memory-extract.js` | Haiku extraction call — pulls durable facts from debrief + notes, returns JSON | Live |
-| `apps/web/lib/db-migrate-step7.js` | `user_memories` table migration | Run locally |
+| `apps/web/lib/db-migrate-step7.js` | `user_memories` table migration | Run in prod |
 | `apps/web/app/api/memories/` | GET list + DELETE by id for user memories | Live |
 | `apps/web/app/dashboard/memories/` | Coach profile page — view + delete memories | Live |
 | `apps/web/lib/stripe.js` | Stripe client, PRICE_ID, getEffectiveTier, trialDaysRemaining | Live |
-| `apps/web/lib/db-migrate-step8.js` | Add stripe_subscription_id to users | Run locally |
+| `apps/web/lib/db-migrate-step8.js` | Add stripe_subscription_id to users | Run in prod |
 | `apps/web/app/api/stripe/checkout/route.js` | POST — create Stripe Checkout Session | Live |
 | `apps/web/app/api/stripe/webhook/route.js` | POST — handle subscription lifecycle events | Live |
 | `apps/web/app/api/stripe/portal/route.js` | POST — create Customer Portal session | Live |
@@ -67,7 +67,7 @@ This document is the single source of truth for what's done, what's in progress,
 - **Stack:** Next.js 14 (App Router), NextAuth v4, Neon Postgres (`@vercel/postgres`), Anthropic SDK, Strava OAuth + webhooks, Vercel hosting.
 - **Debrief caching:** Generated once, stored in `debriefs` table, served from DB on revisit.
 - **Strava runs:** Don't auto-debrief. User clicks "Get debrief →" to trigger generation.
-- **Free tier hardcoded:** `MODEL = "claude-haiku-4-5-20251001"`, `TIER = "free"`. Step 8 adds branching.
+- **Tier branching:** `getEffectiveTier()` in `lib/stripe.js` — debrief route queries DB on every request. Trial active = paid (Sonnet). Trial expired or free = free (Haiku).
 - **Goal context:** Not wired yet (Step 10). MISSING-DATA RULE handles it gracefully.
 - **Context labels:** Energy/stress/sleep quality sent to AI as words (Low/Okay/Strong) not raw numbers.
 - **Technical prompt fields:** Splits, HR zones, RPE omitted from prompt entirely when absent — not "not provided".
@@ -126,16 +126,16 @@ When switching from test → live Stripe keys before alpha:
 
 - **B-015 — Free-tier word count:** Free debriefs running 130–175 words vs 80–100 target. Fix before alpha goes live.
 - **B-017 — invoice.payment_failed unhandled:** Renewal payment failures are silently ignored. Need to handle before real users to downgrade or notify. Add to prod checklist.
-- **B-016 — Run type inference + badge display:** ✅ Fixed in Step 6. Three-part fix: (1) `inferRunType()` fallback changed from `"easy"` → `"unknown"` — name signals + 16km threshold only, pace heuristic removed. (2) `LatestRunCard` and `RunRow` now hide badge when `run_type === "unknown"`. (3) DB migration reset 17 existing Strava runs that had `"easy"` baked in from old fallback. **Prod migration still needed** — run the same SQL against prod Neon DB before launch.
+- **B-016 — Run type inference + badge display:** ✅ Fixed in Step 6. Three-part fix: (1) `inferRunType()` fallback changed from `"easy"` → `"unknown"`. (2) Badge hidden when `run_type === "unknown"`. (3) DB migration reset 17 existing Strava runs.
 
 ---
 
 ## Open questions / known risks
 
-1. **Free tier word count compliance (B-015):** Free-tier debriefs running 130–175 words vs 80–100 target. Needs prompt tune before Step 8 when free/paid distinction drives billing.
-2. **Strava API dependency:** Webhooks and OAuth are the primary external risk. Built with caching and graceful degradation. Manual entry is the fallback.
-3. **Memory extraction safety (Step 7):** S-009 (user memory) involves LLM call after each debrief to extract durable facts. Extraction prompt not yet written — needs safety constraints (no weight, no medications, no inferred diagnoses).
-4. **Free tier cost at scale:** Even on Haiku, every free user costs ~$0.08/month with no revenue. Track from day 1.
+1. **Free tier word count (B-015):** Free debriefs running 130–175 words vs 80–100 target. Fix before alpha — affects perceived value gap between free and paid.
+2. **invoice.payment_failed unhandled (B-017):** Renewal failures silently ignored. Handle before real users.
+3. **Strava API dependency:** Webhooks and OAuth are the primary external risk. Manual entry is the fallback.
+4. **Free tier cost at scale:** Every free user costs ~$0.08/month on Haiku. Track from day 1.
 5. **Competitive timing:** Strava, Whoop, and Garmin all moving into this space. Speed to defensible user base matters more than feature breadth.
 
 ---
