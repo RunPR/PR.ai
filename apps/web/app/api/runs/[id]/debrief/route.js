@@ -8,11 +8,7 @@ import {
   buildUserMessage,
 } from "@/lib/coach-prompt";
 import { extractMemories } from "@/lib/memory-extract";
-
-// Per RELEASE_GUIDE: Step 4 = free tier only. Haiku 4.5 + tier=free.
-// Step 8 will branch to Sonnet 4.6 for paid users.
-const MODEL = "claude-haiku-4-5-20251001";
-const TIER = "free";
+import { getEffectiveTier, PAID_MODEL, FREE_MODEL } from "@/lib/stripe";
 
 export async function POST(request, { params }) {
   const session = await getServerSession(authOptions);
@@ -21,6 +17,14 @@ export async function POST(request, { params }) {
   }
   const userId = session.user.id;
   const runId = params.id;
+
+  // ── 0. Resolve effective tier (trial → paid if still active, else free) ──
+  const tierResult = await sql`
+    SELECT tier, trial_started_at FROM users WHERE id = ${userId} LIMIT 1
+  `;
+  const effectiveTier = getEffectiveTier(tierResult.rows[0] ?? { tier: "free" });
+  const MODEL = effectiveTier === "paid" ? PAID_MODEL : FREE_MODEL;
+  const TIER = effectiveTier;
 
   // ── 1. Verify the run exists and belongs to this user ──────────────
   const runResult = await sql`

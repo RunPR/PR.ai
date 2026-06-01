@@ -198,8 +198,8 @@ SKILL v4.1 validated on Haiku 4.5 + Sonnet 4.6. All 15 test scenarios passed. Ba
 | 6. Context form | ✅ Done | Context gate with labeled pills, run type picker (Strava only), `/api/runs/[id]/context`, prompt v4.2 |
 | 6.5 Prompt caching | ✅ Done | `cache_control: ephemeral` on system prompt block in debrief route; cache stats logged per request |
 | 7. Recent runs + user memory | ✅ Done | Last 5 runs in prompt, user_memories table, Haiku extraction after debrief, Coach page (/dashboard/memories) |
-| 8. Paid tier + billing | ⬜ | Stripe, tier branching in debrief route | **Next** |
-| Alpha | ⬜ | After Step 8 — hand-picked runners, collect real feedback |
+| 8. Paid tier + billing | ✅ Done | Stripe Checkout + webhook + portal, tier branching (Haiku free / Sonnet paid), 14-day reverse trial, bullet rendering fix |
+| Alpha | ⬜ | After Step 8 — hand-picked runners, collect real feedback | **Next** |
 | 8.5 Prompt hardening | ⬜ | After alpha — broaden persona beyond elite marathoners, tone calibration, goal-awareness pre-Step 10 |
 | 8.6 Test suite expansion | ⬜ | After 8.5 — add scenarios for non-elite runners, different distances (5K/10K/HM), lower fitness levels, varied goals; current 15 scenarios skew toward experienced marathoners |
 | 9. Plan ingestion | ⬜ | |
@@ -225,7 +225,7 @@ SKILL v4.1 validated on Haiku 4.5 + Sonnet 4.6. All 15 test scenarios passed. Ba
 - **Debrief caching.** Once generated, debriefs load from DB — no re-generation on page revisit.
 - **Strava runs don't auto-debrief.** They appear on dashboard; user clicks to trigger debrief.
 - **Goal context not wired yet.** Step 10. Currently `goal = null` in the debrief API route. The MISSING-DATA RULE handles it gracefully.
-- **Free tier hardcoded.** `MODEL = "claude-haiku-4-5-20251001"` and `TIER = "free"` in `app/api/runs/[id]/debrief/route.js`. Step 8 adds branching.
+- **Tier branching.** `getEffectiveTier(user)` in `lib/stripe.js` returns 'paid' if tier='paid' OR tier='trial' with trial active. Debrief route queries DB for tier/trial_started_at on every request — never relies on stale session JWT.
 - **Monorepo, two Vercel projects.** Each app has its own `package.json` and deploys independently. Root directory set per project in Vercel.
 
 ---

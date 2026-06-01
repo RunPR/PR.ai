@@ -40,6 +40,13 @@ This document is the single source of truth for what's done, what's in progress,
 | `apps/web/lib/db-migrate-step7.js` | `user_memories` table migration | Run locally |
 | `apps/web/app/api/memories/` | GET list + DELETE by id for user memories | Live |
 | `apps/web/app/dashboard/memories/` | Coach profile page — view + delete memories | Live |
+| `apps/web/lib/stripe.js` | Stripe client, PRICE_ID, getEffectiveTier, trialDaysRemaining | Live |
+| `apps/web/lib/db-migrate-step8.js` | Add stripe_subscription_id to users | Run locally |
+| `apps/web/app/api/stripe/checkout/route.js` | POST — create Stripe Checkout Session | Live |
+| `apps/web/app/api/stripe/webhook/route.js` | POST — handle subscription lifecycle events | Live |
+| `apps/web/app/api/stripe/portal/route.js` | POST — create Customer Portal session | Live |
+| `apps/web/app/dashboard/settings/billing-controls.jsx` | Upgrade / manage billing client component | Live |
+| `apps/web/app/dashboard/runs/[id]/debrief-stream.jsx` | Bullet list rendering in DebriefBody | Updated |
 
 ---
 
@@ -85,8 +92,8 @@ This document is the single source of truth for what's done, what's in progress,
 | 6. Context form | ✅ Done | Context gate, labeled pills, run type picker (Strava), `/api/runs/[id]/context`, prompt v4.2 |
 | 6.5 Prompt caching | ✅ Done | `cache_control: ephemeral` on system prompt block in debrief route; cache stats logged per request |
 | 7. Recent runs + user memory | ✅ Done | Last 5 runs in prompt, user_memories table + Haiku extraction, /dashboard/memories Coach page, back-button router cache fix |
-| 8. Paid tier + billing | ⬜ | Stripe, tier branching, reverse trial | **Next** |
-| Alpha | ⬜ | After Step 8 — hand-picked runners, real feedback |
+| 8. Paid tier + billing | ✅ Done | Stripe Checkout + webhook + customer portal, 14-day reverse trial, Haiku (free) / Sonnet (paid) branching, billing card in settings, bullet rendering fix in DebriefBody |
+| Alpha | ⬜ | After Step 8 — hand-picked runners, real feedback | **Next** |
 | 8.5 Prompt hardening | ⬜ | After alpha — broaden persona, tone calibration, goal-awareness |
 | 8.6 Test suite expansion | ⬜ | After 8.5 — new scenarios for non-elite runners, 5K/10K/HM distances, lower fitness levels, varied goals; current 15 scenarios skew elite marathon |
 | 9. Plan ingestion | ⬜ | |
@@ -96,9 +103,29 @@ This document is the single source of truth for what's done, what's in progress,
 
 ---
 
+## Pre-prod validation (complete before going live)
+
+- [ ] Free tier debrief — set tier to `free`, generate a debrief, confirm no THE WEEK AHEAD and shorter Haiku output
+- [ ] Cancellation webhook — confirm `customer.subscription.deleted` fires on July 1, settings page flips to Free (verifies full billing lifecycle)
+
+## Going live — Stripe prod checklist
+
+When switching from test → live Stripe keys before alpha:
+
+- [ ] Generate live Stripe keys (publishable + secret) and add to Vercel env vars
+- [ ] Create the product + price in **live** mode (separate from test mode)
+- [ ] Register live webhook endpoint in Stripe dashboard → Developers → Webhooks → Add endpoint: `https://pr-app-teal.vercel.app/api/stripe/webhook` — events: `checkout.session.completed`, `customer.subscription.deleted`, `customer.subscription.updated`
+- [ ] Copy live webhook signing secret into Vercel `STRIPE_WEBHOOK_SECRET`
+- [ ] Run `node lib/db-migrate-step8.js` against prod Neon DB (adds `stripe_subscription_id`)
+- [ ] Activate Stripe Billing module (click "Continue setup" on Billing overview) — required for Customer Portal
+- [ ] Configure Customer Portal in Stripe dashboard → Billing → Customer portal → Settings → Save
+
+---
+
 ## Known bugs
 
-- **B-015 — Free-tier word count:** Free debriefs running 130–175 words vs 80–100 target. Fix before Step 8.
+- **B-015 — Free-tier word count:** Free debriefs running 130–175 words vs 80–100 target. Fix before alpha goes live.
+- **B-017 — invoice.payment_failed unhandled:** Renewal payment failures are silently ignored. Need to handle before real users to downgrade or notify. Add to prod checklist.
 - **B-016 — Run type inference + badge display:** ✅ Fixed in Step 6. Three-part fix: (1) `inferRunType()` fallback changed from `"easy"` → `"unknown"` — name signals + 16km threshold only, pace heuristic removed. (2) `LatestRunCard` and `RunRow` now hide badge when `run_type === "unknown"`. (3) DB migration reset 17 existing Strava runs that had `"easy"` baked in from old fallback. **Prod migration still needed** — run the same SQL against prod Neon DB before launch.
 
 ---

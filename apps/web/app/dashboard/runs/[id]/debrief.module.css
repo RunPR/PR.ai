@@ -169,6 +169,30 @@
   color: var(--fg);
 }
 
+/* Bullet lists inside the debrief */
+.bulletList {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 1.15rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.bulletItem {
+  padding-left: 1.2rem;
+  position: relative;
+  line-height: 1.7;
+}
+
+.bulletItem::before {
+  content: "—";
+  position: absolute;
+  left: 0;
+  color: var(--accent);
+  font-weight: 500;
+}
+
 /* Section headers inside the debrief — "THE DEBRIEF", "THE WEEK AHEAD" */
 .sectionHeader {
   font-family: var(--mono);

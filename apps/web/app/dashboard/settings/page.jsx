@@ -5,6 +5,8 @@ import { sql } from "@vercel/postgres";
 import { authOptions } from "@/lib/auth";
 import styles from "./settings.module.css";
 import StravaControls from "./strava-controls";
+import BillingControls from "./billing-controls";
+import { getEffectiveTier, trialDaysRemaining } from "@/lib/stripe";
 
 export default async function SettingsPage({ searchParams }) {
   const session = await getServerSession(authOptions);
@@ -12,16 +14,26 @@ export default async function SettingsPage({ searchParams }) {
 
   const userId = session.user.id;
 
-  const { rows } = await sql`
-    SELECT athlete_id, athlete_data, connected_at, last_synced_at, scope, disconnected_at
-    FROM strava_connections
-    WHERE user_id = ${userId}
-    LIMIT 1
-  `;
-  const conn = rows[0];
+  const [stravaResult, userResult] = await Promise.all([
+    sql`
+      SELECT athlete_id, athlete_data, connected_at, last_synced_at, scope, disconnected_at
+      FROM strava_connections WHERE user_id = ${userId} LIMIT 1
+    `,
+    sql`SELECT tier, trial_started_at FROM users WHERE id = ${userId} LIMIT 1`,
+  ]);
+
+  const conn = stravaResult.rows[0];
   const isConnected = conn && !conn.disconnected_at;
 
+  const userRow = userResult.rows[0] ?? { tier: "free" };
+  const effectiveTier = getEffectiveTier(userRow);
+  const isPaid = effectiveTier === "paid";
+  const daysLeft = trialDaysRemaining(userRow);
+  const isTrialActive = userRow.tier === "trial" && daysLeft > 0;
+  const isTrialExpired = userRow.tier === "trial" && daysLeft === 0;
+
   const successImported = searchParams?.imported ? parseInt(searchParams.imported, 10) : null;
+  const upgraded = searchParams?.upgraded === "1";
   const errorMsg = searchParams?.strava_error || null;
 
   return (
@@ -47,6 +59,14 @@ export default async function SettingsPage({ searchParams }) {
         </p>
       </section>
 
+      {upgraded && (
+        <div className={styles.flashSuccess}>
+          <span className={styles.flashLabel}>✓ You're on Pro</span>
+          <span className={styles.flashMsg}>
+            Welcome to PR.ai Pro. Full debriefs and week-ahead coaching are now unlocked.
+          </span>
+        </div>
+      )}
       {successImported !== null && (
         <div className={styles.flashSuccess}>
           <span className={styles.flashLabel}>✓ Strava connected</span>
@@ -61,6 +81,34 @@ export default async function SettingsPage({ searchParams }) {
           <span className={styles.flashMsg}>{errorMsg}</span>
         </div>
       )}
+
+      <section className={styles.cardWrap} style={{ marginBottom: "1.5rem" }}>
+        <div className={styles.cardHeader}>
+          <div>
+            <div className={styles.cardTitle}>Plan</div>
+            <div className={styles.cardSub}>
+              {isTrialActive
+                ? `Free trial — ${daysLeft} day${daysLeft === 1 ? "" : "s"} left`
+                : isTrialExpired
+                ? "Trial ended — upgrade to keep full access"
+                : isPaid
+                ? "PR.ai Pro — full debriefs + week ahead"
+                : "Free plan — debrief only"}
+            </div>
+          </div>
+          <div className={styles.statusPill}>
+            <span className={`${styles.statusDot} ${isPaid || isTrialActive ? styles.statusDotOn : styles.statusDotOff}`} />
+            <span>{isTrialActive ? "Trial" : isPaid ? "Pro" : "Free"}</span>
+          </div>
+        </div>
+        <BillingControls isPaid={isPaid} />
+        {!isPaid && (
+          <p className={styles.cardNote}>
+            Pro unlocks Sonnet-powered coaching, week-ahead planning, and pattern analysis.
+            {isTrialActive && ` Your trial gives you full access for ${daysLeft} more day${daysLeft === 1 ? "" : "s"}.`}
+          </p>
+        )}
+      </section>
 
       <section className={styles.cardWrap}>
         <div className={styles.cardHeader}>

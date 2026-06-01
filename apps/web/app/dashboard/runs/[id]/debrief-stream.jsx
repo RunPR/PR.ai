@@ -117,6 +117,20 @@ function DebriefBody({ text }) {
           );
         }
 
+        // Bullet list — block contains lines starting with "- "
+        const lines = trimmed.split("\n");
+        if (lines.some(l => l.trimStart().startsWith("- "))) {
+          return (
+            <ul key={i} className={styles.bulletList}>
+              {lines.filter(l => l.trim()).map((line, j) => (
+                <li key={j} className={styles.bulletItem}>
+                  {renderInline(line.replace(/^\s*-\s*/, ""))}
+                </li>
+              ))}
+            </ul>
+          );
+        }
+
         // Paragraph with potential inline **bold**
         return (
           <p key={i} className={styles.paragraph}>
