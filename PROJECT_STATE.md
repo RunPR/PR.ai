@@ -1,6 +1,6 @@
 # PR.ai — Project State
 
-**As of:** May 31, 2026
+**As of:** June 1, 2026
 
 This document is the single source of truth for what's done, what's in progress, and what's next. Update after every significant work session.
 
@@ -9,7 +9,7 @@ This document is the single source of truth for what's done, what's in progress,
 ## Where we are
 
 **Phase 0 — Skill hardening:** ✓ Complete (closed May 21, 2026). Prompt since bumped to v4.2.
-**Phase 1 — The 11-step build:** In progress. Steps 1–8 + Step 10 complete. 8.5 prompt hardening is next, then alpha.
+**Phase 1 — The 11-step build:** In progress. Steps 1–8, 8.5 + Step 10 complete. 8.6 test suite expansion is next, then alpha.
 
 ---
 
@@ -23,14 +23,14 @@ This document is the single source of truth for what's done, what's in progress,
 | `docs/RELEASE_GUIDE.md` | Phase 0-4 release plan, stack decisions, build order | Updated |
 | `docs/TEST_SUITE.md` | 15 test scenarios with expected behaviors | Final |
 | `docs/SUGGESTIONS_LOG.md` | Full suggestions + backlog log (S-001–S-010, B-001–B-016) | Living document |
-| `prompts/system-prompt.txt` | Coaching prompt source of truth | v4.2 |
+| `prompts/system-prompt.txt` | Coaching prompt source of truth | v4.4 |
 | `prompts/system-prompt-v4.1.txt` | v4.1 backup — not used in production | Archived |
 | `test/test-harness.js` | Node.js harness — runs all 15 scenarios against Anthropic API | Ready, run between steps |
 | `test/rca_baseline_v4.1_2026-05-21.json` | Baseline test results | Exported May 21 |
 | `apps/landing/` | Next.js landing page + Resend waitlist | Live at https://pr-ai-landing.vercel.app |
 | `apps/web/` | Next.js product app — auth, dashboard, runs, debriefs, Strava | Live at https://pr-app-teal.vercel.app |
 | `apps/web/lib/strava.js` | Strava API client, token refresh, activity mapping, name-only type inference | Live |
-| `apps/web/lib/coach-prompt.js` | Coaching prompt v4.2, buildUserMessage, context label helpers | Live |
+| `apps/web/lib/coach-prompt.js` | Coaching prompt v4.4, buildUserMessage, context label helpers | Live |
 | `apps/web/lib/db-migrate-step5.js` | `strava_connections` table migration | Run in prod |
 | `apps/web/app/api/strava/` | connect / callback / sync / webhook / disconnect routes | Live |
 | `apps/web/app/api/runs/[id]/context/route.js` | POST context + run_type for a run | Live |
@@ -77,8 +77,8 @@ This document is the single source of truth for what's done, what's in progress,
 
 ### Test suite
 - 15 scenarios: core runs (A1–A5), edge cases (B1–B4), sensitive content (C1–C3), robustness (D1–D3).
-- Last run: May 31, 2026 — 15/15 passed. Haiku 4.5: 9/9, Sonnet 4.6: 6/6. No regressions after Step 10 coach-prompt changes.
-- Note: free-tier word counts running 130–175 words vs 80–100 target (B-015, fix in Step 8.5).
+- Last run: June 1, 2026 — 15/15 passed. Haiku 4.5: 9/9, Sonnet 4.6: 6/6. No regressions after Step 8.5 prompt hardening (v4.4).
+- Free tier: 122–178 words (Haiku, max_tokens 350). Paid tier: 323–590 words (Sonnet, max_tokens 1024). B-015 resolved.
 
 ---
 
@@ -96,8 +96,8 @@ This document is the single source of truth for what's done, what's in progress,
 | 6.5 Prompt caching | ✅ Done | `cache_control: ephemeral` on system prompt block in debrief route; cache stats logged per request |
 | 7. Recent runs + user memory | ✅ Done | Last 5 runs in prompt, user_memories table + Haiku extraction, /dashboard/memories Coach page, back-button router cache fix |
 | 8. Paid tier + billing | ✅ Done | Stripe Checkout + webhook + customer portal, 14-day reverse trial, Haiku (free) / Sonnet (paid) branching, billing card in settings, bullet rendering fix in DebriefBody |
-| 8.5 Prompt hardening | ⬜ | Broaden persona beyond elite marathoners, tone calibration, B-015 word count fix | **Next** |
-| 8.6 Test suite expansion | ⬜ | Add scenarios for non-elite runners, 5K/10K/HM, lower fitness levels, goal-aware scenarios |
+| 8.5 Prompt hardening | ✅ Done | Prompt v4.4 — science grounding (Daniels, Seiler, Lydiard, Magness), four pillars, broadened persona (sub-5:00 through sub-3:00), B-015 fixed, free/paid gap structural in code |
+| 8.6 Test suite expansion | ⬜ | Add scenarios for non-elite runners, 5K/10K/HM, lower fitness levels, goal-aware scenarios | **Next** |
 | Alpha | ⬜ | After 8.5 + 8.6 — hand-picked runners, real feedback |
 | 9. Plan ingestion | ⬜ | |
 | 10. Goal setting + onboarding | ✅ Done | goals table (distance, name, date, goal_time), GoalBanner on dashboard, /dashboard/goal edit page, wired into debrief prompt with weeks_until_race |
@@ -127,7 +127,7 @@ When switching from test → live Stripe keys before alpha:
 
 ## Known bugs
 
-- **B-015 — Free-tier word count:** Free debriefs running 130–175 words vs 80–100 target. Fix before alpha goes live.
+- **B-015 — Free-tier word count:** ✅ Resolved in Step 8.5. Free tier: max_tokens 350, data isolation (no recent runs/memories), 122–178 words. Paid: max_tokens 1024, full context, 323–590 words.
 - **B-017 — invoice.payment_failed unhandled:** Renewal payment failures are silently ignored. Need to handle before real users to downgrade or notify. Add to prod checklist.
 - **B-016 — Run type inference + badge display:** ✅ Fixed in Step 6. Three-part fix: (1) `inferRunType()` fallback changed from `"easy"` → `"unknown"`. (2) Badge hidden when `run_type === "unknown"`. (3) DB migration reset 17 existing Strava runs.
 
@@ -135,7 +135,7 @@ When switching from test → live Stripe keys before alpha:
 
 ## Open questions / known risks
 
-1. **Free tier word count (B-015):** Free debriefs running 130–175 words vs 80–100 target. Fix before alpha — affects perceived value gap between free and paid.
+1. **Free tier word count (B-015):** ✅ Resolved — see Known bugs.
 2. **invoice.payment_failed unhandled (B-017):** Renewal failures silently ignored. Handle before real users.
 3. **Strava API dependency:** Webhooks and OAuth are the primary external risk. Manual entry is the fallback.
 4. **Free tier cost at scale:** Every free user costs ~$0.08/month on Haiku. Track from day 1.

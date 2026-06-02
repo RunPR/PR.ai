@@ -31,7 +31,7 @@ PR.ai/
 │   ├── TEST_SUITE.md
 │   └── SUGGESTIONS_LOG.md
 ├── prompts/
-│   └── system-prompt.txt  (v4.2 — source of truth for the coaching prompt)
+│   └── system-prompt.txt  (v4.4 — source of truth for the coaching prompt)
 ├── test/
 │   ├── test-harness.js
 │   ├── test_suite.jsx     (v4.1 — fixed, validated)
@@ -99,7 +99,7 @@ apps/web/
 │   └── auth.module.css
 ├── lib/
 │   ├── auth.js                    (NextAuth options)
-│   ├── coach-prompt.js            (v4.2 prompt + buildUserMessage + buildSystemPrompt + context label helpers)
+│   ├── coach-prompt.js            (v4.4 prompt + buildUserMessage + buildSystemPrompt + context label helpers)
 │   ├── db-init.js                 (users table)
 │   ├── db-migrate-step3.js        (runs + run_contexts tables)
 │   ├── db-migrate-step4.js        (debriefs table)
@@ -150,17 +150,20 @@ apps/web/
 
 ---
 
-## Coaching prompt — SKILL v4.2
+## Coaching prompt — SKILL v4.4
 
 - **File:** `prompts/system-prompt.txt` (source of truth) — v4.1 backed up at `prompts/system-prompt-v4.1.txt`
 - **In code:** `apps/web/lib/coach-prompt.js` (embedded, no file IO at runtime)
 - **Tier injection:** `SYSTEM_PROMPT.replace("{{tier}}", tier)` — never append to user message
-- **Free tier:** Haiku 4.5, `tier="free"` → THE DEBRIEF only (~80-100 words, motivating directional close)
-- **Paid tier:** Sonnet 4.6, `tier="paid"` → THE DEBRIEF + THE WEEK AHEAD
+- **Free tier:** Haiku 4.5, `tier="free"` → THE DEBRIEF only (~120 words, max_tokens 350). No recent runs or memories passed — today's run only. Enforced at both API call and buildUserMessage() level.
+- **Paid tier:** Sonnet 4.6, `tier="paid"` → THE DEBRIEF + THE WEEK AHEAD, max_tokens 1024. Full context: recent runs, memories, plan.
 - **Tier branching** in `app/api/runs/[id]/debrief/route.js`: queries DB for `tier` + `trial_started_at` on every request, calls `getEffectiveTier()` — Haiku 4.5 for free, Sonnet 4.6 for paid/trial-active
+- **Science grounding (v4.4):** Daniels' VDOT framework, Seiler/Stöggl & Sperlich (2014) polarized model, Holloszy & Coyle (1984) mitochondrial mechanism, Lydiard periodization, Magness individualization, Norwegian double-threshold rationale
+- **Coaching identity (v4.4):** Nick Bare ("Go One More"), David Goggins (40% Rule), Luke Hopkins ("Control the Controllable"), Max Jolliffe (one mile at a time), Andy Glaze ("Smile or you're doing it wrong"), Dr. Andy Galpin ("if you have a body, you are an athlete")
+- **Four pillars (v4.4):** Individualization (Magness), Polarized Intensity (Seiler+Galpin), Periodization Context (Lydiard+Daniels), Identity & Culture (Bare+Goggins+Jolliffe+Galpin)
 - **INJURY RULE:** no clinical terms (tendinitis, fasciitis, ITBS, etc.) — neutral language only
 - **MISSING-DATA RULE:** applies to context fields users CAN provide (sleep, energy, stress, notes). Technical fields (splits, HR zones, RPE) are omitted from the prompt entirely when absent — never shown as "not provided"
-- **COACHING PHILOSOPHY:** training-forward by default. Easy day = easy running, not rest. Rest only warranted by genuine signals (injury, back-to-back hard sessions within 48h, RHR elevated 3+ days, sleep <5h + high stress + hard effort all together). Grounded in Bowerman/Pfitzinger/Seiler research + Nick Bare/Max Jolliffe/Andy Glaze philosophy.
+- **COACHING PHILOSOPHY:** training-forward by default. Easy day = easy running, not rest. Rest only warranted by genuine signals (injury, back-to-back hard sessions within 48h, RHR elevated 3+ days, sleep <5h + high stress + hard effort all together).
 - **Context labels:** energy/stress/sleep quality sent to AI as words (Low/Okay/Strong, Poor/Okay/Great) not numbers
 
 ---
@@ -197,7 +200,7 @@ Results write to `test/results/test-results-latest.json`. All 15 scenarios must 
 ## Phase + step status
 
 ### Phase 0 — ✅ Complete (May 21, 2026)
-SKILL v4.1 validated on Haiku 4.5 + Sonnet 4.6. All 15 test scenarios passed. Baseline at `test/rca_baseline_v4.1_2026-05-21.json`. Prompt since updated to v4.2 (May 31, 2026) — see coaching prompt section.
+SKILL v4.1 validated on Haiku 4.5 + Sonnet 4.6. All 15 test scenarios passed. Baseline at `test/rca_baseline_v4.1_2026-05-21.json`. Prompt updated to v4.2 (May 31, 2026), then v4.4 (June 1, 2026) with Step 8.5 hardening — see coaching prompt section.
 
 ### Phase 1 — In progress
 
@@ -213,8 +216,8 @@ SKILL v4.1 validated on Haiku 4.5 + Sonnet 4.6. All 15 test scenarios passed. Ba
 | 6.5 Prompt caching | ✅ Done | `cache_control: ephemeral` on system prompt block in debrief route; cache stats logged per request |
 | 7. Recent runs + user memory | ✅ Done | Last 5 runs in prompt, user_memories table, Haiku extraction after debrief, Coach page (/dashboard/memories) |
 | 8. Paid tier + billing | ✅ Done | Stripe Checkout + webhook + portal, tier branching (Haiku free / Sonnet paid), 14-day reverse trial, bullet rendering fix |
-| 8.5 Prompt hardening | ⬜ | Broaden persona beyond elite marathoners, tone calibration, B-015 word count fix | **Next** |
-| 8.6 Test suite expansion | ⬜ | Add scenarios for non-elite runners, 5K/10K/HM distances, lower fitness levels, goal-aware scenarios |
+| 8.5 Prompt hardening | ✅ Done | Prompt v4.4 — science grounding, four pillars, broadened persona (sub-5:00 → sub-3:00), B-015 fixed, free/paid gap structural |
+| 8.6 Test suite expansion | ⬜ | Add scenarios for non-elite runners, 5K/10K/HM distances, lower fitness levels, goal-aware scenarios | **Next** |
 | Alpha | ⬜ | After 8.5 + 8.6 — hand-picked runners, collect real feedback |
 | 9. Plan ingestion | ⬜ | |
 | 10. Goal setting + onboarding | ✅ Done | goals table, race distance + name + date + goal time, GoalBanner on dashboard, /dashboard/goal page, wired into debrief prompt |

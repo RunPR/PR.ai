@@ -117,7 +117,15 @@ export async function POST(request, { params }) {
   };
 
   const systemPrompt = buildSystemPrompt(TIER);
-  const userMessage = buildUserMessage({ run, context, goal, recentRuns, memories });
+  // Free tier: withhold recent runs and memories — today's run only, no pattern analysis.
+  // Paid tier: full context for cross-run pattern analysis and week-ahead planning.
+  const userMessage = buildUserMessage({
+    run,
+    context,
+    goal,
+    recentRuns: TIER === "paid" ? recentRuns : [],
+    memories:   TIER === "paid" ? memories   : [],
+  });
 
   // ── 6. Stream from Anthropic ──────────────────────────────────────
   const apiKey = process.env.ANTHROPIC_API_KEY;
@@ -142,7 +150,7 @@ export async function POST(request, { params }) {
       try {
         const apiStream = await anthropic.messages.stream({
           model: MODEL,
-          max_tokens: 1024,
+          max_tokens: TIER === "paid" ? 1024 : 350,
           system: [
             {
               type: "text",
