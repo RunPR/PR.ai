@@ -12,8 +12,8 @@ description: >
 
 # Running Coach Prompt
 
-A prompt engineering skill for generating post-run coaching debriefs for experienced
-marathon runners chasing a time barrier (e.g. sub-4:00, sub-3:30).
+A prompt engineering skill for generating post-run coaching debriefs for marathoners
+at every level — from first sub-5:00 attempts to Boston qualifiers and sub-3:00 chasers.
 
 ## Product positioning
 
@@ -48,8 +48,10 @@ read it from the watch, push adjusted workouts back.
 
 ## System Prompt
 
-Use this as the `system` field in every Claude API call. Replace `{{tier}}` with
-either `free` or `paid`.
+> **Note:** The prompt below is the v4.1 Phase 0 baseline — kept here for reference.
+> **Live prompt is v4.4** — see `prompts/system-prompt.txt` (source of truth) and
+> `apps/web/lib/coach-prompt.js` (embedded at runtime). Do not edit this block to
+> change production behavior. Update coach-prompt.js instead.
 
 ```
 You are an elite distance running coach specializing in helping experienced marathon
@@ -147,13 +149,11 @@ TIER RULE — your current tier is: {{tier}}
 
 If tier is "free":
 - Produce one section only: THE DEBRIEF.
-- Aim for 80-100 words. Shorter is fine if the run doesn't need more.
-- Today's run only. Do not analyze patterns across recent runs even if provided.
-- End with ONE motivating, directional statement — not a specific training prescription.
-  Keep it general: reinforce the habit, connect the effort to the goal, or correct one
-  thing to focus on next time. Only recommend rest if a genuine signal is present
-  (injury notes, or sleep under 5h + high stress + hard effort combined). For a normal
-  run, point forward.
+- 3–5 sentences. Target ~120 words, do not exceed 150. max_tokens: 350.
+- Today's run only. No recent runs or memories passed at the route level.
+- Final sentence points forward — one cue, correction, or connection to the goal.
+  Only recommend rest if a genuine signal is present (injury, or sleep under 5h +
+  high stress + hard effort combined). For a normal run, point forward.
 
 If tier is "paid":
 - Produce two sections in this order:
@@ -212,7 +212,7 @@ Race date: {{race_date}}
 Goal finish time: {{goal_time}}
 Weeks until race: {{weeks_until_race}}
 
---- RECENT RUNS (last 5) ---
+--- RECENT RUNS ---
 {{recent_runs}}
 
 --- USER MEMORY ---
@@ -240,7 +240,7 @@ Weeks until race: {{weeks_until_race}}
 | `race_date` | string | ISO date. "not provided" if not set. |
 | `goal_time` | string | e.g. "3:59:59". "not provided" if not set. |
 | `weeks_until_race` | int | Computed from run date vs race date. "not provided" if no race date. |
-| `recent_runs` | string | Last 5 runs as one per line. "No recent runs on file." if empty. |
+| `recent_runs` | string | Last 5 runs as one per line. "No recent runs on file." if empty. Free tier: always empty (withheld at route level). |
 | `user_memory` | string | Durable key/value facts from past debriefs. "No memory on file yet." for new users. |
 | `training_plan_excerpt` | string | Current week + next 2 weeks of the user's plan. Paid tier only. "no plan loaded" if not set. |
 
@@ -309,8 +309,8 @@ const response = await fetch("https://api.anthropic.com/v1/messages", {
   method: "POST",
   headers: { "Content-Type": "application/json" },
   body: JSON.stringify({
-    model: "claude-sonnet-4-6",  // paid tier; free tier uses "claude-haiku-4-5-20251001"
-    max_tokens: 1000,
+    model: tier === "paid" ? "claude-sonnet-4-6" : "claude-haiku-4-5-20251001",
+    max_tokens: tier === "paid" ? 1024 : 350,
     system: systemPrompt,
     messages: [{ role: "user", content: userMessage }]
   })

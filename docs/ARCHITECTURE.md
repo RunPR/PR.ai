@@ -136,7 +136,7 @@ The system is organized into three layers, each with strict boundaries:
   with a clear interface: `coaching` (skill + Anthropic SDK), `memory`,
   `plan`, `strava`, `billing`, `auth`. **Nothing else in the codebase imports
   the external SDKs.**
-- **Data layer (coral)** — PostgreSQL on Railway/Render. All tables defined
+- **Data layer (coral)** — Neon Postgres (`@vercel/postgres`). All tables defined
   in `DATABASE_SCHEMA.md`.
 
 **Why this structure matters:** every backlog item maps to exactly ONE layer.
@@ -168,49 +168,39 @@ the case where the user skips the context form.
 
 ## Where things live in the codebase
 
+> **Note:** The structure below is the target architecture. The current implementation
+> uses `apps/web/` (Next.js monorepo) with service modules in `apps/web/lib/` as plain
+> JS files, not TypeScript. See `CLAUDE.md` for the exact current file map.
+
 ```
-/app                          # Next.js app router
-  /(marketing)                # Landing page, signup
-  /(dashboard)                # Authenticated app
-    /runs/[id]                # Run detail + debrief view
-    /memories                 # "What I Know About You" screen
-    /plan                     # Plan upload + view
-    /settings                 # Account, billing
+apps/web/
+  app/                        # Next.js App Router
+    dashboard/                # Authenticated app
+      runs/[id]/              # Run detail + debrief view
+      memories/               # "What I Know About You" screen
+      goal/                   # Race goal set/edit
+      settings/               # Account, billing, Strava
+    api/
+      runs/[id]/debrief/      # Debrief generation + streaming
+      runs/[id]/context/      # Context form submission
+      goals/                  # Goal upsert
+      memories/               # Memory CRUD
+      strava/                 # OAuth + webhook handling
+      stripe/                 # Checkout, webhook, portal
 
-/api                          # Next.js API routes
-  /webhooks/strava            # Strava activity webhook
-  /webhooks/stripe            # Stripe billing webhook
-  /runs                       # CRUD for runs
-  /context                    # Context form submission
-  /debriefs                   # Debrief generation trigger
+  lib/                        # Service modules
+    coach-prompt.js           # v4.4 system prompt + buildUserMessage
+    memory-extract.js         # Post-debrief Haiku extraction call
+    strava.js                 # OAuth, token refresh, activity mapping
+    stripe.js                 # Stripe client, getEffectiveTier
+    auth.js                   # NextAuth options
+    runs.js                   # getRunsForUser
+    format.js                 # formatDistance, formatPace, etc.
+    db-migrate-*.js           # One migration script per step
 
-/services                     # Service modules (the seams)
-  /coaching                   # The skill + Anthropic SDK
-    skill-prompt.ts           # System prompt template
-    build-user-message.ts     # Assembles the user-message
-    generate-debrief.ts       # The Anthropic call
-    extract-memory.ts         # Post-debrief memory extraction
-  /memory                     # User memory CRUD
-  /plan                       # Plan parsing + excerpts
-  /strava                     # OAuth + webhook handling
-  /billing                    # Stripe wrapper
-  /auth                       # Session helpers
-
-/db                           # Database access
-  /migrations                 # Versioned SQL migrations
-  /schema.ts                  # Type-safe schema (Prisma or Kysely)
-  /queries                    # Reusable query functions
-
-/jobs                         # Background workers
-  generate-debrief.ts         # Triggered after context form OR timeout
-  extract-memory.ts           # Triggered after debrief is shown
-  trial-expiry.ts             # Daily cron — moves users from trial → free
-  send-reminder.ts            # Push notifications
-
-/test                         # Test suite (TEST_SUITE.md scenarios)
-  /fixtures                   # Input data for each scenario
-  /skill                      # Run scenarios against the skill
-  /e2e                        # Playwright tests for critical flows
+test/
+  test-harness.js             # 19 scenarios against Anthropic API
+  results/                    # Latest test output JSON
 ```
 
 ---
@@ -227,9 +217,9 @@ the case where the user skips the context form.
 **Cost estimate at MVP scale (100 users, 3 debriefs/user/week):**
 - Vercel: free tier sufficient
 - Neon: free tier sufficient at MVP scale
-- Anthropic API: ~$30-100/month (depends on tier mix; assume $1-3 per paid user per month)
+- Anthropic API: ~$2-5/month (paid user ~$0.18/month on Sonnet 4.6; free user ~$0.08/month on Haiku 4.5 — prompt caching reduces cost significantly at scale)
 - Stripe: % of revenue, no flat cost
-- **Total infra cost: ~$30-100/month at 100 users (lower than original estimate — no DB host)**
+- **Total infra cost: ~$5-15/month at 100 users**
 
 This is the right scale to test the freemium economics. At $14.99/mo with 10%
 paid conversion, 100 users = 10 paying × $14.99 = $150/mo revenue, roughly
