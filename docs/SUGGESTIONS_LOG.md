@@ -124,6 +124,15 @@ A running track of all suggestions made for the product. Each entry has a status
 - **Why deferred:** No real users yet. Must fix before alpha.
 - **Trigger to revisit:** Before going live with Stripe production keys.
 
+### B-018 — Training profile for planless runners
+- **Date:** 2026-06-01
+- **What:** A 3-question onboarding screen that captures training habits for runners who don't follow a formal plan: (1) How many days/week do you run? (2) What types of runs do you do? (3) When is your long run? Answers are seeded directly as `user_memories` entries (e.g. `training_frequency: 5 days/week`, `long_run_day: Sunday`, `typical_run_types: Easy Mon/Wed/Fri, tempo Tuesday, long Sunday`). No new DB table needed — the coach picks them up immediately via the existing memory injection.
+- **Why this is distinct from plan ingestion (S-010/Step 9):** Plan ingestion is for runners who follow a formal Higdon, Pfitzinger, or coach-written plan. Training profile is for runners who train by feel and general habit — a large segment of the sub-4:00 to sub-5:00 range. Both matter; they're not the same user.
+- **Alpha workaround:** Ask these three questions during the 15-min onboarding call, then manually seed the memories. No code change needed for alpha.
+- **Why deferred:** Alpha workaround is sufficient. Build the self-serve screen after alpha confirms the non-plan-runner segment is real.
+- **Trigger to revisit:** After alpha. If a meaningful share of users don't have a formal plan, build the onboarding screen before beta.
+- **Cost:** 3-question screen in onboarding flow + auto-write to user_memories. ~2 hours.
+
 ---
 
 ## Rejected
