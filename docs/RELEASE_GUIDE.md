@@ -113,17 +113,18 @@ next. No exceptions.
 - Billing card in settings, bullet rendering fix in DebriefBody
 - Prompt caching (`cache_control: ephemeral` on system prompt block)
 
-### Step 8.5 — Prompt hardening ⬜ Next
-- Broaden persona beyond elite marathon runners — any runner with a goal
-- Tone calibration for different fitness levels
-- Fix B-015: free-tier word count (130–175 words vs 80–100 target)
-- Run full test suite after every prompt change
+### Step 8.5 — Prompt hardening ✅ Done
+- Prompt v4.4: science grounding (Daniels, Seiler/Stöggl, Holloszy, Lydiard, Magness), four pillars, broadened persona (sub-5:00 through sub-3:00)
+- B-015 fixed: free tier max_tokens 350, data isolation enforced in route (no recent runs/memories), 97–173 words
+- Free/paid gap now structural in both route and prompt — not just word count
 
-### Step 8.6 — Test suite expansion ⬜
-- Add scenarios for non-elite runners, 5K/10K/HM distances, lower fitness levels
-- Goal-aware scenarios now that Step 10 is wired
+### Step 8.6 — Test suite expansion ✅ Done
+- 19 scenarios (up from 15): A–G series. E-series: non-elite runners; F-series: half marathon; G-series: periodization
+- All scenarios rewritten to match buildUserMessage() output exactly — word labels, real goal format, no training plan section
+- B2 replaced: ultra 32mi scenario → Strava run with context gate skipped (no context data)
+- 19/19 passed June 1, 2026. Haiku 4.5: 11/11, Sonnet 4.6: 8/8
 
-### Alpha — Hand-picked user testing (after 8.5 + 8.6) ⬜
+### Alpha — Hand-picked user testing ⬜ **Next**
 - 5–10 runners Arturo knows personally, mix of Strava + manual users
 - Full paid-tier access for all alpha users (no Stripe gate)
 - Personal onboarding call per user

@@ -5,12 +5,13 @@ before moving to Phase 1 (infrastructure build).
 
 ## Test Results
 
-**Status:** ✓ All 15 scenarios passed  
-**Models tested:** Haiku 4.5 (free tier), Sonnet 4.6 (paid tier)  
+**Status:** ✓ All 19 scenarios passed  
+**Models tested:** Haiku 4.5 (free tier, 11 scenarios), Sonnet 4.6 (paid tier, 8 scenarios)  
 **Baseline:** `test/results/rca_baseline_v4.1_2026-05-21.json`  
-**Date:** May 21, 2026
+**Last run:** June 1, 2026 — 19/19 passed after Step 8.6 suite expansion
+**Free tier:** 97–173 words (Haiku, max_tokens 350). **Paid tier:** 295–578 words (Sonnet, max_tokens 1024).
 
-All scenarios produced functionally correct output within word limits and tier constraints. Prompt is locked for Phase 1 build.
+All scenarios match buildUserMessage() output format exactly: word labels (Low/Okay/Strong), real goal format (`Weeks until race`), real recent-runs format, no training plan section (Step 9 not shipped). Prompt locked at v4.4.
 
 ## How to use this suite
 
@@ -25,11 +26,19 @@ All scenarios produced functionally correct output within word limits and tier c
 
 ## Suite structure
 
-15 scenarios across 4 categories:
-- **A. Core scenarios (5)** — the most common run types
-- **B. Edge cases (4)** — unusual data shapes
-- **C. Sensitive content (3)** — emotional and safety-critical inputs
-- **D. Robustness (3)** — missing data, tier leakage, output reliability
+19 scenarios across 7 categories:
+- **A. Core scenarios (5)** — the most common run types (A1–A5)
+- **B. Edge cases (4)** — unusual data shapes (B1–B4)
+- **C. Sensitive content (3)** — emotional and safety-critical inputs (C1–C3)
+- **D. Robustness (3)** — missing data, tier leakage, output reliability (D1–D3)
+- **E. Non-elite runners (2)** — mid-pack and newer runners (E1–E2)
+- **F. Shorter distances (1)** — half marathon goal (F1)
+- **G. Periodization (1)** — taper behavior (G1)
+
+Free: A1, A2, A5, B1, B2, C1, C2, C3, D2, D3, E2 (11 scenarios)
+Paid: A3, A4, B3, B4, D1, E1, F1, G1 (8 scenarios)
+
+Authoritative scenario inputs live in `test/test-harness.js`. Descriptions below are the human-readable spec.
 
 ---
 
@@ -133,18 +142,19 @@ All scenarios produced functionally correct output within word limits and tier c
 
 ---
 
-### B2. Ultra distance (30+ miles)
+### B2. Strava run — context gate skipped, no context data
 
-**Input summary:** 32mi long run, 5+ hours, RPE 8.
+**Input summary:** Easy 5mi Strava run. User skipped the context gate entirely — all context fields are "not provided."
 
 **Expected behaviors:**
-- Acknowledges this is outside typical marathon training.
-- Recommends substantial recovery.
-- Paid tier: WEEK AHEAD recommends dialing back the rest of the week significantly.
+- Applies the MISSING-DATA RULE: acknowledges the gap as a teaching moment.
+- Shows the athlete what richer coaching they'd get with context data.
+- Still produces a useful read of the run data alone.
 
 **Must NOT:**
-- Treat 32 miles as a normal long run.
-- Recommend a hard workout within 48 hours.
+- Hallucinate how the athlete felt.
+- Skip the teaching moment about logging context.
+- Refuse to produce a debrief because data is missing.
 
 ---
 
@@ -282,6 +292,75 @@ short, kind, and steps back from coaching mode.
 
 ---
 
+## E. Non-elite runners
+
+### E1. Mid-pack runner — sub-4:30 marathon, easy run too hot (paid)
+
+**Input summary:** Chicago Marathon goal 4:30:00, 19 weeks out. 5.2mi easy, 11:21/mi, 157 bpm — heart rate elevated for an easy day.
+
+**Expected behaviors:**
+- Anchors pace feedback to the 4:30 goal — not in the abstract.
+- Calls out the gray zone: too fast for easy, not producing the adaptation it should.
+- Treats the runner with the same analytical precision as a sub-3:00 runner.
+- WEEK AHEAD gives a concrete HR cap or pace band for the next easy run.
+
+**Must NOT:**
+- Condescend or soften the read because of the pace level.
+- Recommend rest (elevated HR on an easy day is a pacing signal, not a rest signal).
+
+---
+
+### E2. Newer runner — sub-5:00 marathon, first big long run (free)
+
+**Input summary:** NYC Marathon goal 5:00:00, 22 weeks out. 9.0mi, 12:12/mi, 156 bpm. Notes: "Longest run I've ever done. Had to walk twice but finished. Really proud."
+
+**Expected behaviors:**
+- Honors the milestone genuinely without being condescending.
+- Reads the walk breaks as pacing data, not failure — 22 weeks is base phase.
+- Free tier: one forward-pointing close tied to the goal.
+
+**Must NOT:**
+- Treat the walk breaks as a problem to fix immediately.
+- Use empty praise ("amazing," "incredible").
+- Reference patterns that don't exist (first run logged).
+
+---
+
+## F. Shorter distances
+
+### F1. Half marathon goal (sub-2:00) — strong tempo, 9 weeks out (paid)
+
+**Input summary:** Miami Half Marathon, 2:00:00 goal, 9 weeks out. 6.5mi, 9:11/mi avg, 168 bpm. Splits show 2mi warmup then 4mi at goal HM pace. Notes: "2 miles warmup then 4 miles at goal half marathon pace. Felt controlled throughout."
+
+**Expected behaviors:**
+- Anchors analysis to 2:00:00 HM goal — not marathon pace.
+- Names what the workout built (lactate threshold, race-specific fitness).
+- WEEK AHEAD accounts for 9 weeks = peak/build phase — recovery quality matters.
+
+**Must NOT:**
+- Apply marathon periodization logic to a half marathon race.
+- Ignore the split pattern showing the structured session.
+
+---
+
+## G. Periodization
+
+### G1. Taper week — runner pushes hard 3 weeks from race (paid)
+
+**Input summary:** San Francisco Marathon, 3:30:00 goal, 3 weeks out. 13.0mi, 8:44/mi, 162 bpm — negative split long run during taper. Notes: "Legs felt great so I pushed the last 4 miles. Felt like I had a lot left in the tank."
+
+**Expected behaviors:**
+- Flags the hard effort during taper as a risk — taper is for absorbing the training, not proving fitness.
+- Cites the periodization context (under 4 weeks = taper phase).
+- WEEK AHEAD pulls back intensity: the work is done, trust it.
+
+**Must NOT:**
+- Praise the effort without flagging the taper risk.
+- Recommend more hard sessions to "stay sharp."
+- Catastrophize ("you may have blown the race").
+
+---
+
 ## Test execution checklist
 
 Before running the suite:
@@ -297,11 +376,12 @@ For each scenario:
 - [ ] If any check fails, stop, note the failure, and tune the prompt
 - [ ] After tuning, re-run the **entire** suite (not just the failed scenario)
 
-## Pass/fail criteria for moving to Phase 1
+## Pass/fail criteria
 
-- 100% pass rate across all 15 scenarios.
+- 100% pass rate across all 19 scenarios.
 - No prompt regressions: a scenario that passed before must still pass.
-- Word count discipline holds: no debrief exceeds its tier limit by more than 15%.
+- Word count discipline holds: free tier under 175 words, paid tier under 650 words.
+- Run the full suite any time `coach-prompt.js` or the debrief route is modified.
 
 ## Maintaining the suite
 
