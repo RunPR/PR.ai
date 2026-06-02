@@ -186,9 +186,9 @@ cd /Users/arturosanchez/PR/PR.ai
 ANTHROPIC_API_KEY=<key> node test/test-harness.js
 ```
 
-Results write to `test/results/test-results-latest.json`. All 15 scenarios must pass before closing a step.
+Results write to `test/results/test-results-latest.json`. All 19 scenarios must pass before closing a step.
 
-**What it covers:** Coaching prompt quality across all 15 scenarios (free + paid tier).
+**What it covers:** Coaching prompt quality across all 19 scenarios (free + paid tier).
 **What it does NOT cover:** UI, routes, DB, auth, Strava — smoke test those manually.
 
 **When to run:**
@@ -217,8 +217,8 @@ SKILL v4.1 validated on Haiku 4.5 + Sonnet 4.6. All 15 test scenarios passed. Ba
 | 7. Recent runs + user memory | ✅ Done | Last 5 runs in prompt, user_memories table, Haiku extraction after debrief, Coach page (/dashboard/memories) |
 | 8. Paid tier + billing | ✅ Done | Stripe Checkout + webhook + portal, tier branching (Haiku free / Sonnet paid), 14-day reverse trial, bullet rendering fix |
 | 8.5 Prompt hardening | ✅ Done | Prompt v4.4 — science grounding, four pillars, broadened persona (sub-5:00 → sub-3:00), B-015 fixed, free/paid gap structural |
-| 8.6 Test suite expansion | ⬜ | Add scenarios for non-elite runners, 5K/10K/HM distances, lower fitness levels, goal-aware scenarios | **Next** |
-| Alpha | ⬜ | After 8.5 + 8.6 — hand-picked runners, collect real feedback |
+| 8.6 Test suite expansion | ✅ Done | 19 scenarios, all matching buildUserMessage() format exactly — E/F/G series added, B2 replaced with real no-context use case |
+| Alpha | ⬜ | Hand-picked runners, collect real feedback | **Next** |
 | 9. Plan ingestion | ⬜ | |
 | 10. Goal setting + onboarding | ✅ Done | goals table, race distance + name + date + goal time, GoalBanner on dashboard, /dashboard/goal page, wired into debrief prompt |
 | 11. PWA polish | ⬜ | Web manifest, service worker |

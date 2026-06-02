@@ -1,6 +1,6 @@
 # PR.ai — Project State
 
-**As of:** June 1, 2026
+**As of:** June 1, 2026 (updated)
 
 This document is the single source of truth for what's done, what's in progress, and what's next. Update after every significant work session.
 
@@ -9,7 +9,7 @@ This document is the single source of truth for what's done, what's in progress,
 ## Where we are
 
 **Phase 0 — Skill hardening:** ✓ Complete (closed May 21, 2026). Prompt since bumped to v4.2.
-**Phase 1 — The 11-step build:** In progress. Steps 1–8, 8.5 + Step 10 complete. 8.6 test suite expansion is next, then alpha.
+**Phase 1 — The 11-step build:** In progress. Steps 1–8, 8.5, 8.6 + Step 10 complete. Alpha is next.
 
 ---
 
@@ -77,8 +77,9 @@ This document is the single source of truth for what's done, what's in progress,
 
 ### Test suite
 - 15 scenarios: core runs (A1–A5), edge cases (B1–B4), sensitive content (C1–C3), robustness (D1–D3).
-- Last run: June 1, 2026 — 15/15 passed. Haiku 4.5: 9/9, Sonnet 4.6: 6/6. No regressions after Step 8.5 prompt hardening (v4.4).
-- Free tier: 122–178 words (Haiku, max_tokens 350). Paid tier: 323–590 words (Sonnet, max_tokens 1024). B-015 resolved.
+- Last run: June 1, 2026 — 19/19 passed. Haiku 4.5: 11/11, Sonnet 4.6: 8/8. No regressions after Step 8.6 suite expansion.
+- Free tier: 97–173 words (Haiku, max_tokens 350). Paid tier: 295–578 words (Sonnet, max_tokens 1024).
+- Scenarios now match buildUserMessage() output exactly: word labels, correct goal format, real recent-runs format, no training plan section.
 
 ---
 
@@ -97,8 +98,8 @@ This document is the single source of truth for what's done, what's in progress,
 | 7. Recent runs + user memory | ✅ Done | Last 5 runs in prompt, user_memories table + Haiku extraction, /dashboard/memories Coach page, back-button router cache fix |
 | 8. Paid tier + billing | ✅ Done | Stripe Checkout + webhook + customer portal, 14-day reverse trial, Haiku (free) / Sonnet (paid) branching, billing card in settings, bullet rendering fix in DebriefBody |
 | 8.5 Prompt hardening | ✅ Done | Prompt v4.4 — science grounding (Daniels, Seiler, Lydiard, Magness), four pillars, broadened persona (sub-5:00 through sub-3:00), B-015 fixed, free/paid gap structural in code |
-| 8.6 Test suite expansion | ⬜ | Add scenarios for non-elite runners, 5K/10K/HM, lower fitness levels, goal-aware scenarios | **Next** |
-| Alpha | ⬜ | After 8.5 + 8.6 — hand-picked runners, real feedback |
+| 8.6 Test suite expansion | ✅ Done | 19 scenarios (up from 15), all fixed to match buildUserMessage() format exactly, added E/F/G series, replaced ultra B2 with real no-context use case |
+| Alpha | ⬜ | Hand-picked runners, collect real feedback | **Next** |
 | 9. Plan ingestion | ⬜ | |
 | 10. Goal setting + onboarding | ✅ Done | goals table (distance, name, date, goal_time), GoalBanner on dashboard, /dashboard/goal edit page, wired into debrief prompt with weeks_until_race |
 | 11. PWA polish | ⬜ | Web manifest, service worker |
